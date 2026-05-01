@@ -1,22 +1,52 @@
 import Link from "next/link"
 
+import { SiteHeader } from "@/components/site-header"
 import { Button } from "@/components/ui/button"
+import { createClient } from "@/lib/supabase/server"
 
-export default function Page() {
+export default async function Page() {
+  const supabase = await createClient()
+  const { data } = await supabase.auth.getClaims()
+  const isAuthenticated = !!data?.claims
+
   return (
-    <div className="flex min-h-svh p-6">
-      <div className="flex max-w-md min-w-0 flex-col gap-4 text-sm leading-loose">
-        <div>
-          <h1 className="font-medium">Project ready!</h1>
-          <p>You may now add components and start building.</p>
-          <Button asChild className="mt-2">
-            <Link href="/design-system">Open design system</Link>
-          </Button>
-        </div>
-        <div className="font-mono text-xs text-muted-foreground">
-          (Press <kbd>d</kbd> to toggle dark mode)
-        </div>
-      </div>
+    <div className="flex min-h-svh flex-col bg-background">
+      <SiteHeader />
+      <main className="flex flex-1 items-center justify-center px-6 py-16">
+        <section className="flex max-w-2xl flex-col items-center gap-6 text-center">
+          <span className="rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+            QSTP Hackathon · 2026
+          </span>
+          <h1 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
+            Build faster with a sharp foundation.
+          </h1>
+          <p className="text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg">
+            Authentication, a design system, and a clean component library —
+            ready out of the box, so you can spend the weekend on the idea
+            instead of the scaffolding.
+          </p>
+          <div className="flex flex-col items-center gap-3 sm:flex-row">
+            {isAuthenticated ? (
+              <Button asChild size="lg">
+                <Link href="/dashboard">Open dashboard</Link>
+              </Button>
+            ) : (
+              <>
+                <Button asChild size="lg">
+                  <Link href="/auth/sign-up">Get started</Link>
+                </Button>
+                <Button asChild size="lg" variant="outline">
+                  <Link href="/auth/login">Sign in</Link>
+                </Button>
+              </>
+            )}
+          </div>
+          <p className="font-mono text-xs text-muted-foreground">
+            Press <kbd className="rounded border bg-muted px-1.5 py-0.5">d</kbd>{" "}
+            to toggle dark mode
+          </p>
+        </section>
+      </main>
     </div>
   )
 }
