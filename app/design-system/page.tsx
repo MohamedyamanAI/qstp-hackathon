@@ -1,10 +1,19 @@
+"use client"
+
 import Link from "next/link"
+import dynamic from "next/dynamic"
 
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import PreviewExample from "@/components/blocks/preview"
-import Preview02Example from "@/components/blocks/preview-02"
+
+const PreviewExample = dynamic(() => import("@/components/blocks/preview"), {
+  ssr: false,
+})
+const Preview02Example = dynamic(
+  () => import("@/components/blocks/preview-02"),
+  { ssr: false }
+)
 
 const COMPONENTS = [
   "accordion",
