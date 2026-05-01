@@ -1,6 +1,8 @@
+import type { Metadata, Viewport } from "next"
 import { Geist, Geist_Mono, Inter } from "next/font/google"
 
 import "./globals.css"
+import { ServiceWorkerRegister } from "@/components/sw-register"
 import { ThemeProvider } from "@/components/theme-provider"
 import { cn } from "@/lib/utils";
 
@@ -10,6 +12,25 @@ const fontMono = Geist_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
 })
+
+export const metadata: Metadata = {
+  title: "QSTP Hackathon",
+  description: "QSTP Hackathon application",
+  applicationName: "QSTP",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "QSTP",
+  },
+  icons: {
+    icon: "/icons/icon-192.png",
+    apple: "/icons/icon-192.png",
+  },
+}
+
+export const viewport: Viewport = {
+  themeColor: "#ffffff",
+}
 
 export default function RootLayout({
   children,
@@ -24,6 +45,7 @@ export default function RootLayout({
     >
       <body>
         <ThemeProvider>{children}</ThemeProvider>
+        <ServiceWorkerRegister />
       </body>
     </html>
   )
