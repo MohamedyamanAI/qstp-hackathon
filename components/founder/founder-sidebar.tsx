@@ -7,7 +7,6 @@ import {
   IdeaIcon,
   InboxUploadIcon,
   Logout03Icon,
-  Megaphone01Icon,
   Settings01Icon,
   UserIcon,
 } from "@hugeicons/core-free-icons"
@@ -35,7 +34,6 @@ import {
 const NAV_ITEMS = [
   { href: "/founder/home", label: "Home", icon: Home01Icon },
   { href: "/founder/submit", label: "Submit", icon: InboxUploadIcon },
-  { href: "/founder/distribute", label: "Distribute", icon: Megaphone01Icon },
   { href: "/founder/opportunities", label: "Opportunities", icon: IdeaIcon },
   { href: "/founder/data-room", label: "Data Room", icon: Folder02Icon },
   { href: "/founder/rewards", label: "Rewards", icon: Award01Icon },

@@ -173,6 +173,18 @@ export default async function FounderHomePage() {
   const latestOutputs = (latest?.generated_outputs as GeneratedOutputs | null) ?? {}
   const submissionIds = submissions.map((s) => s.id)
 
+  // -- Latest assignment id (for deep-linking to the submit/distribute view)
+  const { data: latestAssignment } = latest
+    ? await supabase
+        .from("report_assignments")
+        .select("id")
+        .eq("submission_id", latest.id)
+        .maybeSingle()
+    : { data: null as { id: string } | null }
+  const latestAssignmentHref = latestAssignment?.id
+    ? `/founder/submit/${latestAssignment.id}`
+    : "/founder/submit"
+
   // -- Feedback received on submissions
   const { data: feedback } =
     submissionIds.length > 0
@@ -295,7 +307,7 @@ export default async function FounderHomePage() {
       }.`,
       meta: ie.subject ?? "Monthly update",
       timeIso: ie.lastSentAt ?? latest?.submitted_at ?? new Date().toISOString(),
-      primaryHref: "/founder/distribute",
+      primaryHref: latestAssignmentHref,
       primaryLabel: "See replies",
       badge: {
         label: `${Math.round((opens / Math.max(ie.recipients ?? 1, 1)) * 100)}% open`,
@@ -319,7 +331,7 @@ export default async function FounderHomePage() {
             : "Featured in this week's QSTP newsletter — sent to 2,400 partners and investors.",
         meta: "Win amplification",
         timeIso: latest.submitted_at ?? new Date().toISOString(),
-        primaryHref: "/founder/distribute",
+        primaryHref: latestAssignmentHref,
         primaryLabel: "View post",
         badge: {
           label: w.channel === "linkedin" ? "LinkedIn" : "Newsletter",
@@ -749,8 +761,8 @@ export default async function FounderHomePage() {
               />
               <Separator />
               <Button variant="outline" size="sm" asChild>
-                <Link href="/founder/distribute">
-                  Open distribution center
+                <Link href={latestAssignmentHref}>
+                  Review &amp; distribute drafts
                   <HugeiconsIcon icon={ArrowUpRight01Icon} data-icon="inline-end" />
                 </Link>
               </Button>

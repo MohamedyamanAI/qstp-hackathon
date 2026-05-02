@@ -4,7 +4,6 @@ import {
   Analytics02Icon,
   Building01Icon,
   Calendar01Icon,
-  HeartCheckIcon,
   InboxIcon,
   Logout03Icon,
   Note01Icon,
@@ -36,7 +35,6 @@ const NAV_ITEMS = [
   { href: "/team/today", label: "Today", icon: Calendar01Icon },
   { href: "/team/portfolio", label: "Portfolio", icon: Building01Icon },
   { href: "/team/submissions", label: "Submissions", icon: InboxIcon },
-  { href: "/team/health", label: "Health Monitor", icon: HeartCheckIcon },
   { href: "/team/insights", label: "Insights", icon: Analytics02Icon },
   { href: "/team/reports", label: "Reports", icon: Note01Icon },
 ]

@@ -6,7 +6,6 @@ const TEAM_TITLES: Record<string, string> = {
   "/team/today": "Today",
   "/team/portfolio": "Portfolio",
   "/team/submissions": "Submissions",
-  "/team/health": "Health Monitor",
   "/team/insights": "Insights",
   "/team/reports": "Reports",
   "/team/settings": "Settings",
@@ -15,7 +14,6 @@ const TEAM_TITLES: Record<string, string> = {
 const FOUNDER_TITLES: Record<string, string> = {
   "/founder/home": "Home",
   "/founder/submit": "Submit",
-  "/founder/distribute": "Distribute",
   "/founder/opportunities": "Unfair Advantage Finder",
   "/founder/data-room": "Data Room",
   "/founder/rewards": "Rewards",
