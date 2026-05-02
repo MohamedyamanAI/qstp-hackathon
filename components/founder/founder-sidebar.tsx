@@ -33,9 +33,9 @@ import {
 
 const NAV_ITEMS = [
   { href: "/founder/home", label: "Home", icon: Home01Icon },
+  { href: "/founder/data-room", label: "Data Room", icon: Folder02Icon },
   { href: "/founder/submit", label: "Submit", icon: InboxUploadIcon },
   { href: "/founder/opportunities", label: "Opportunities", icon: IdeaIcon },
-  { href: "/founder/data-room", label: "Data Room", icon: Folder02Icon },
   { href: "/founder/rewards", label: "Rewards", icon: Award01Icon },
 ]
 
