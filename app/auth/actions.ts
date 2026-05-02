@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { headers } from "next/headers"
 
+import { fetchUserRole, roleHomeFor } from "@/lib/auth/role"
 import { createClient } from "@/lib/supabase/server"
 
 function getSiteUrl(forwardedHost?: string | null, forwardedProto?: string | null) {
@@ -17,6 +18,16 @@ function getSiteUrl(forwardedHost?: string | null, forwardedProto?: string | nul
   return "http://localhost:3000"
 }
 
+async function postAuthRedirect(next: string | null | undefined): Promise<never> {
+  if (next && next.length > 0) redirect(next)
+  const supabase = await createClient()
+  const { data } = await supabase.auth.getClaims()
+  const userId =
+    typeof data?.claims?.sub === "string" ? data.claims.sub : null
+  const role = userId ? await fetchUserRole(supabase, userId) : null
+  redirect(roleHomeFor(role))
+}
+
 export type AuthState = { error?: string } | undefined
 
 export async function login(
@@ -25,7 +36,7 @@ export async function login(
 ): Promise<AuthState> {
   const email = String(formData.get("email") ?? "")
   const password = String(formData.get("password") ?? "")
-  const next = String(formData.get("next") ?? "/dashboard")
+  const next = String(formData.get("next") ?? "")
 
   const supabase = await createClient()
   const { error } = await supabase.auth.signInWithPassword({ email, password })
@@ -35,7 +46,7 @@ export async function login(
   }
 
   revalidatePath("/", "layout")
-  redirect(next || "/dashboard")
+  await postAuthRedirect(next)
 }
 
 export async function signUp(
@@ -61,7 +72,7 @@ export async function signUp(
     email,
     password,
     options: {
-      emailRedirectTo: `${siteUrl}/auth/confirm?next=/dashboard`,
+      emailRedirectTo: `${siteUrl}/auth/confirm`,
     },
   })
 
@@ -122,5 +133,5 @@ export async function updatePassword(
   }
 
   revalidatePath("/", "layout")
-  redirect("/dashboard")
+  await postAuthRedirect(null)
 }

@@ -2,12 +2,18 @@ import Link from "next/link"
 
 import { SiteHeader } from "@/components/site-header"
 import { Button } from "@/components/ui/button"
+import { fetchUserRole, roleHomeFor } from "@/lib/auth/role"
 import { createClient } from "@/lib/supabase/server"
 
 export default async function Page() {
   const supabase = await createClient()
   const { data } = await supabase.auth.getClaims()
-  const isAuthenticated = !!data?.claims
+  const userId =
+    typeof data?.claims?.sub === "string" ? data.claims.sub : null
+  const home = userId
+    ? roleHomeFor(await fetchUserRole(supabase, userId))
+    : null
+  const isAuthenticated = !!userId
 
   return (
     <div className="flex min-h-svh flex-col bg-background">
@@ -26,9 +32,9 @@ export default async function Page() {
             instead of the scaffolding.
           </p>
           <div className="flex flex-col items-center gap-3 sm:flex-row">
-            {isAuthenticated ? (
+            {isAuthenticated && home ? (
               <Button asChild size="lg">
-                <Link href="/dashboard">Open dashboard</Link>
+                <Link href={home}>Open workspace</Link>
               </Button>
             ) : (
               <>

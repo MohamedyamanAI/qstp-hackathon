@@ -1,12 +1,18 @@
 import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
+import { fetchUserRole, roleHomeFor } from "@/lib/auth/role"
 import { createClient } from "@/lib/supabase/server"
 
 export async function SiteHeader() {
   const supabase = await createClient()
   const { data } = await supabase.auth.getClaims()
-  const isAuthenticated = !!data?.claims
+  const userId =
+    typeof data?.claims?.sub === "string" ? data.claims.sub : null
+  const home = userId
+    ? roleHomeFor(await fetchUserRole(supabase, userId))
+    : null
+  const isAuthenticated = !!userId
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -21,9 +27,9 @@ export async function SiteHeader() {
           <Button asChild variant="ghost" size="sm">
             <Link href="/design-system">Design system</Link>
           </Button>
-          {isAuthenticated ? (
+          {isAuthenticated && home ? (
             <Button asChild size="sm">
-              <Link href="/dashboard">Dashboard</Link>
+              <Link href={home}>Workspace</Link>
             </Button>
           ) : (
             <>

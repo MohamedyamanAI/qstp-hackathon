@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation"
 
-import { AppSidebar } from "@/components/dashboard/app-sidebar"
+import { TeamSidebar } from "@/components/team/team-sidebar"
 import { Separator } from "@/components/ui/separator"
 import {
   SidebarInset,
@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/sidebar"
 import { createClient } from "@/lib/supabase/server"
 
-export default async function DashboardLayout({
+export default async function TeamLayout({
   children,
 }: {
   children: React.ReactNode
@@ -19,20 +19,20 @@ export default async function DashboardLayout({
   const claims = data?.claims
 
   if (!claims) {
-    redirect("/auth/login?next=/dashboard")
+    redirect("/auth/login?next=/team/today")
   }
 
-  const email = String(claims.email ?? claims.sub ?? "Account")
+  const email = String(claims.email ?? claims.sub ?? "Team")
 
   return (
     <SidebarProvider>
-      <AppSidebar email={email} />
+      <TeamSidebar email={email} />
       <SidebarInset>
         <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border/60 px-4">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mx-1 h-4" />
           <span className="text-sm font-medium text-muted-foreground">
-            Dashboard
+            Incubation Team
           </span>
         </header>
         <div className="flex flex-1 flex-col p-6">{children}</div>

@@ -1,10 +1,13 @@
 "use client"
 
 import {
-  DashboardSquare01Icon,
-  Home01Icon,
+  Analytics02Icon,
+  Building01Icon,
+  Calendar01Icon,
+  HeartCheckIcon,
+  InboxIcon,
   Logout03Icon,
-  PaintBoardIcon,
+  Note01Icon,
   Settings01Icon,
   UserIcon,
 } from "@hugeicons/core-free-icons"
@@ -28,40 +31,36 @@ import {
 } from "@/components/ui/sidebar"
 
 const NAV_ITEMS = [
-  { href: "/dashboard", label: "Overview", icon: Home01Icon },
-  {
-    href: "/dashboard/projects",
-    label: "Projects",
-    icon: DashboardSquare01Icon,
-  },
-  { href: "/dashboard/settings", label: "Settings", icon: Settings01Icon },
+  { href: "/team/today", label: "Today", icon: Calendar01Icon },
+  { href: "/team/portfolio", label: "Portfolio", icon: Building01Icon },
+  { href: "/team/submissions", label: "Submissions", icon: InboxIcon },
+  { href: "/team/health", label: "Health Monitor", icon: HeartCheckIcon },
+  { href: "/team/insights", label: "Insights", icon: Analytics02Icon },
+  { href: "/team/reports", label: "Reports", icon: Note01Icon },
 ]
 
-const RESOURCE_ITEMS = [
-  { href: "/design-system", label: "Design system", icon: PaintBoardIcon },
+const FOOTER_ITEMS = [
+  { href: "/team/settings", label: "Settings", icon: Settings01Icon },
 ]
 
-export function AppSidebar({
-  email,
-}: {
-  email: string
-}) {
+export function TeamSidebar({ email }: { email: string }) {
   const pathname = usePathname()
   const isActive = (href: string) =>
-    href === "/dashboard"
-      ? pathname === href
-      : pathname === href || pathname.startsWith(`${href}/`)
+    pathname === href || pathname.startsWith(`${href}/`)
 
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
         <div className="flex items-center gap-2 px-2 py-1.5">
-          <div className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground text-xs font-semibold">
+          <div className="flex size-7 items-center justify-center rounded-md bg-primary text-xs font-semibold text-primary-foreground">
             Q
           </div>
-          <span className="text-sm font-semibold tracking-tight group-data-[collapsible=icon]:hidden">
-            QSTP
-          </span>
+          <div className="flex flex-col group-data-[collapsible=icon]:hidden">
+            <span className="text-sm font-semibold tracking-tight">QSTP</span>
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+              Incubation Team
+            </span>
+          </div>
         </div>
       </SidebarHeader>
       <SidebarSeparator />
@@ -88,12 +87,16 @@ export function AppSidebar({
           </SidebarGroupContent>
         </SidebarGroup>
         <SidebarGroup>
-          <SidebarGroupLabel>Resources</SidebarGroupLabel>
+          <SidebarGroupLabel>Account</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {RESOURCE_ITEMS.map((item) => (
+              {FOOTER_ITEMS.map((item) => (
                 <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton asChild tooltip={item.label}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive(item.href)}
+                    tooltip={item.label}
+                  >
                     <Link href={item.href}>
                       <HugeiconsIcon icon={item.icon} />
                       <span>{item.label}</span>

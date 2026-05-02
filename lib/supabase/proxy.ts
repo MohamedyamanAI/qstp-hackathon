@@ -1,7 +1,13 @@
 import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
+import { fetchUserRole, roleHomeFor } from "@/lib/auth/role"
+import type { Database } from "@/lib/supabase/database.types"
+
 const PUBLIC_PATHS = ["/", "/auth", "/api"]
+
+const FOUNDER_PREFIX = "/founder"
+const TEAM_PREFIX = "/team"
 
 function isPublicPath(pathname: string) {
   return PUBLIC_PATHS.some(
@@ -9,10 +15,18 @@ function isPublicPath(pathname: string) {
   )
 }
 
+function isFounderArea(pathname: string) {
+  return pathname === FOUNDER_PREFIX || pathname.startsWith(`${FOUNDER_PREFIX}/`)
+}
+
+function isTeamArea(pathname: string) {
+  return pathname === TEAM_PREFIX || pathname.startsWith(`${TEAM_PREFIX}/`)
+}
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
-  const supabase = createServerClient(
+  const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
@@ -44,11 +58,27 @@ export async function updateSession(request: NextRequest) {
   const { data } = await supabase.auth.getClaims()
   const claims = data?.claims
 
-  if (!claims && !isPublicPath(request.nextUrl.pathname)) {
+  const pathname = request.nextUrl.pathname
+
+  if (!claims && !isPublicPath(pathname)) {
     const url = request.nextUrl.clone()
     url.pathname = "/auth/login"
-    url.searchParams.set("next", request.nextUrl.pathname)
+    url.searchParams.set("next", pathname)
     return NextResponse.redirect(url)
+  }
+
+  if (claims && (isFounderArea(pathname) || isTeamArea(pathname))) {
+    const userId = typeof claims.sub === "string" ? claims.sub : null
+    const role = userId ? await fetchUserRole(supabase, userId) : null
+    const onWrongArea =
+      (isFounderArea(pathname) && role === "team") ||
+      (isTeamArea(pathname) && role === "founder")
+    if (onWrongArea) {
+      const url = request.nextUrl.clone()
+      url.pathname = roleHomeFor(role)
+      url.search = ""
+      return NextResponse.redirect(url)
+    }
   }
 
   return supabaseResponse
