@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit",
     "email:sync": "node scripts/sync-email-templates.mjs",
     "email:sync:dry": "node scripts/sync-email-templates.mjs --dry-run",
+    "mcp:founder-reports": "node mcp/founder-reports.mjs",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
@@ -53,6 +54,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@opennextjs/cloudflare": "^1.19.5",
     "@tailwindcss/postcss": "^4.2.1",
     "@types/node": "^25.5.0",
