@@ -69,14 +69,6 @@ export default async function FounderSettingsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
-        <p className="text-sm text-muted-foreground">
-          Profile, integrations, cap table, compliance, notifications, privacy,
-          and security.
-        </p>
-      </div>
-
       <FounderSettings data={data} />
     </div>
   )

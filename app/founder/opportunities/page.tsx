@@ -87,16 +87,6 @@ export default async function FounderOpportunitiesPage({
 
   return (
     <div className="flex flex-col gap-5">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Unfair Advantage Finder
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Grants, investors, customers, talent, and resources matched to your
-          stage and sector.
-        </p>
-      </div>
-
       <OpportunitiesTabs active={active} />
 
       <div className="grid gap-5 lg:grid-cols-[1fr_320px]">

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
 
 import { FounderSidebar } from "@/components/founder/founder-sidebar"
+import { HeaderTitle } from "@/components/header-title"
 import { NotificationBell } from "@/components/notifications/notification-bell"
 import {
   SidebarInset,
@@ -30,9 +31,7 @@ export default async function FounderLayout({
       <SidebarInset>
         <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border/60 px-4">
           <SidebarTrigger className="-ml-1" />
-          <span className="text-sm font-medium text-muted-foreground">
-            Founder
-          </span>
+          <HeaderTitle />
           <div className="ml-auto">
             <NotificationBell variant="header" />
           </div>

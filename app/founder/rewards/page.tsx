@@ -9,11 +9,13 @@ import {
   Coffee01Icon,
   Coins01Icon,
   Coupon01Icon,
+  DashboardSpeed01Icon,
   Database02Icon,
   FireIcon,
   Megaphone01Icon,
   Mortarboard02Icon,
   PlaneIcon,
+  ShoppingBag01Icon,
   StarAward01Icon,
   StarCircleIcon,
   UserGroupIcon,
@@ -229,87 +231,72 @@ export default async function FounderRewardsPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Rewards</h1>
-        <p className="text-sm text-muted-foreground">
-          Points, tier progress, and the marketplace where they unlock real
-          things.
-        </p>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
-        <Card className="overflow-hidden">
-          <div className="relative bg-gradient-to-br from-primary/15 via-primary/5 to-transparent p-6">
+      <div className="grid items-stretch gap-4 lg:grid-cols-[2fr_1fr]">
+        <Card className="overflow-hidden py-0">
+          <div className="p-6 text-white" style={{ background: "linear-gradient(135deg, #3a4a1a 0%, #5c6b2f 30%, #4a5a20 50%, #6b7b3a 70%, #3a4a1a 100%)" }}>
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="flex size-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                <div className="flex size-12 items-center justify-center rounded-xl bg-lime-400 text-[#3a4a1a]">
                   <HugeiconsIcon icon={current.icon} className="size-6" />
                 </div>
                 <div>
-                  <Badge variant="secondary" className="capitalize">
+                  <Badge className="capitalize border-white/20 bg-white/15 text-white">
                     {current.label} tier
                   </Badge>
-                  <h2 className="mt-1 text-3xl font-semibold tabular-nums tracking-tight">
+                  <h2 className="mt-1 text-3xl font-semibold tabular-nums tracking-tight text-white">
                     {points.toLocaleString()}
                   </h2>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-white/60">
                     points balance
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-1 rounded-full bg-orange-500/15 px-3 py-1 text-orange-600 dark:text-orange-400">
+              <div className="flex items-center gap-1 rounded-full bg-orange-500/25 px-3 py-1 text-orange-300">
                 <HugeiconsIcon icon={FireIcon} className="size-4" />
                 <span className="text-sm font-semibold">3 month streak</span>
               </div>
             </div>
-          </div>
-          <CardContent>
             {next ? (
-              <div className="flex flex-col gap-2">
+              <div className="mt-6 flex flex-col gap-2">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="capitalize text-muted-foreground">
+                  <span className="capitalize text-white/60">
                     Progress to {next.label}
                   </span>
-                  <span className="font-medium tabular-nums">
+                  <span className="font-medium tabular-nums text-white">
                     {pointsToNext.toLocaleString()} pts to go
                   </span>
                 </div>
                 <Progress value={pct} />
-                <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-muted-foreground">
-                  <span>{current.label}</span>
-                  <span>{next.label}</span>
-                </div>
               </div>
             ) : (
-              <p className="text-xs text-muted-foreground">
+              <p className="mt-6 text-xs text-white/60">
                 You&apos;ve reached the top tier. Stay legendary.
               </p>
             )}
-          </CardContent>
-          <Separator />
-          <CardContent className="grid grid-cols-3 gap-3">
-            {TIERS.slice(0, 5).map((t) => {
-              const reached = points >= t.min
-              return (
-                <div
-                  key={t.tier}
-                  className={`flex flex-col items-center gap-1 rounded-md border p-2 text-center text-[11px] ${
-                    reached
-                      ? "border-primary/30 bg-primary/5"
-                      : "border-border/50 opacity-60"
-                  }`}
-                >
-                  <HugeiconsIcon
-                    icon={t.icon}
-                    className={`size-5 ${reached ? "text-primary" : "text-muted-foreground"}`}
-                  />
-                  <span className="font-medium">{t.label}</span>
-                  <span className="tabular-nums text-muted-foreground">
-                    {t.min.toLocaleString()}
-                  </span>
-                </div>
-              )
-            })}
+          </div>
+          <CardContent className="py-2 pb-0">
+            <div className="flex items-center justify-between">
+              {TIERS.slice(0, 5).map((t) => {
+                const reached = points >= t.min
+                return (
+                  <div
+                    key={t.tier}
+                    className={`flex items-center gap-1.5 text-[11px] ${
+                      reached ? "" : "opacity-40"
+                    }`}
+                  >
+                    <HugeiconsIcon
+                      icon={t.icon}
+                      className={`size-4 ${reached ? "text-primary" : "text-muted-foreground"}`}
+                    />
+                    <span className="font-medium">{t.label}</span>
+                    <span className="tabular-nums text-muted-foreground">
+                      {t.min.toLocaleString()}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
           </CardContent>
         </Card>
 
@@ -329,16 +316,11 @@ export default async function FounderRewardsPage() {
               label="Verified data bonuses"
               points={50}
             />
-            <Earner
-              icon={UserGroupIcon}
-              label="Community contributions"
-              points={25}
-            />
             <Earner icon={FireIcon} label="Streak bonus" points={75} />
             <Separator className="my-1" />
             <div className="flex items-center justify-between text-sm font-medium">
               <span>Total this month</span>
-              <span className="tabular-nums">+300</span>
+              <span className="tabular-nums">+275</span>
             </div>
           </CardContent>
         </Card>
@@ -346,9 +328,9 @@ export default async function FounderRewardsPage() {
 
       <Tabs defaultValue="marketplace">
         <TabsList variant="line" className="h-auto flex-wrap justify-start">
-          <TabsTrigger value="marketplace">Marketplace</TabsTrigger>
-          <TabsTrigger value="activity">Activity</TabsTrigger>
-          <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
+          <TabsTrigger value="marketplace"><HugeiconsIcon icon={ShoppingBag01Icon} className="size-4" /> Marketplace</TabsTrigger>
+          <TabsTrigger value="activity"><HugeiconsIcon icon={DashboardSpeed01Icon} className="size-4" /> Activity</TabsTrigger>
+          <TabsTrigger value="leaderboard"><HugeiconsIcon icon={StarAward01Icon} className="size-4" /> Leaderboard</TabsTrigger>
         </TabsList>
 
         <TabsContent value="marketplace">
