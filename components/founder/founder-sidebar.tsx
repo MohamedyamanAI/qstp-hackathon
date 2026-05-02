@@ -1,8 +1,8 @@
 "use client"
 
 import {
-  Analytics01Icon,
   Award01Icon,
+  Folder02Icon,
   Home01Icon,
   IdeaIcon,
   InboxUploadIcon,
@@ -37,7 +37,7 @@ const NAV_ITEMS = [
   { href: "/founder/submit", label: "Submit", icon: InboxUploadIcon },
   { href: "/founder/distribute", label: "Distribute", icon: Megaphone01Icon },
   { href: "/founder/opportunities", label: "Opportunities", icon: IdeaIcon },
-  { href: "/founder/metrics", label: "Metrics", icon: Analytics01Icon },
+  { href: "/founder/data-room", label: "Data Room", icon: Folder02Icon },
   { href: "/founder/rewards", label: "Rewards", icon: Award01Icon },
 ]
 

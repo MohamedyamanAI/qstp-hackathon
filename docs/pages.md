@@ -12,7 +12,7 @@ Per-page checklist of what to build. Routes already scaffolded in
 4. Team **Today** — worklist + inline feedback
 5. Founder **Opportunities** — Unfair Advantage Finder
 6. Team **Portfolio** — filterable grid
-7. Founder **Metrics** + Investor-Ready Mode
+7. Founder **Data Room** (Investor-Ready Mode is the page itself)
 8. Founder **Rewards** — points wallet animation
 
 Tier 3 (mock with screenshots in slides if time-pressed): Team Health, Insights,
@@ -183,7 +183,7 @@ Examples:
 
 ---
 
-## `/founder/metrics` — Startup Command Center
+## `/founder/data-room` — Always-Live Investor Data Room
 
 **Summary cards row** (4-5)
 - Revenue (current + MoM trend)
