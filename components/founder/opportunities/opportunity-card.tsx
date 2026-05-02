@@ -34,37 +34,49 @@ export type OpportunityCardData = {
 
 const CATEGORY_META: Record<
   Category,
-  { label: string; icon: typeof IdeaIcon; tone: string }
+  { label: string; icon: typeof IdeaIcon; tone: string; image: string }
 > = {
   grant: {
     label: "Grant",
     icon: Coins01Icon,
     tone: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
+    image:
+      "https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=800&h=320&q=70",
   },
   competition: {
     label: "Competition",
     icon: Rocket01Icon,
     tone: "bg-purple-500/15 text-purple-600 dark:text-purple-400",
+    image:
+      "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&h=320&q=70",
   },
   investor: {
     label: "Investor",
     icon: Money01Icon,
     tone: "bg-blue-500/15 text-blue-600 dark:text-blue-400",
+    image:
+      "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=800&h=320&q=70",
   },
   customer: {
     label: "Customer",
     icon: Building01Icon,
     tone: "bg-orange-500/15 text-orange-600 dark:text-orange-400",
+    image:
+      "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&h=320&q=70",
   },
   talent: {
     label: "Talent",
     icon: UserGroupIcon,
     tone: "bg-pink-500/15 text-pink-600 dark:text-pink-400",
+    image:
+      "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&h=320&q=70",
   },
   resource: {
     label: "Resource",
     icon: Briefcase01Icon,
     tone: "bg-cyan-500/15 text-cyan-600 dark:text-cyan-400",
+    image:
+      "https://images.unsplash.com/photo-1499951360447-b19be8fe80f5?auto=format&fit=crop&w=800&h=320&q=70",
   },
 }
 
@@ -95,21 +107,30 @@ export function OpportunityCard({
           : "transition hover:ring-foreground/30"
       }
     >
-      <CardContent className="flex flex-col gap-3">
-        <div className="flex items-start justify-between gap-2">
+      <div className="relative">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={meta.image}
+          alt=""
+          className={`w-full object-cover ${isHeadline ? "h-40" : "h-24"}`}
+        />
+        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/40 to-transparent" />
+        <div className="absolute left-3 top-3 flex items-center gap-1.5">
           <Badge
             variant="outline"
-            className={`gap-1 border-transparent ${meta.tone}`}
+            className={`gap-1 border-transparent shadow-sm ${meta.tone}`}
           >
             <HugeiconsIcon icon={meta.icon} className="size-3" />
             {meta.label}
           </Badge>
-          {data.fit_score !== null ? (
-            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold tabular-nums text-primary">
-              {data.fit_score}% fit
-            </span>
-          ) : null}
         </div>
+        {data.fit_score !== null ? (
+          <span className="absolute right-3 top-3 rounded-full bg-background/90 px-2 py-0.5 text-[10px] font-semibold tabular-nums text-primary shadow-sm backdrop-blur">
+            {data.fit_score}% fit
+          </span>
+        ) : null}
+      </div>
+      <CardContent className="flex flex-col gap-3">
         <div>
           <h3
             className={

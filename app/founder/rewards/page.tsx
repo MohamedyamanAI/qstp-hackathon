@@ -103,29 +103,107 @@ const ACTIVITY = [
   },
 ]
 
+const IMG = (id: string) =>
+  `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=600&h=300&q=70`
+
 const MARKETPLACE = {
   Resources: [
-    { name: "Mentor slot · 1 hour", cost: 200, icon: Mortarboard02Icon },
-    { name: "Lab equipment access", cost: 350, icon: Coins01Icon },
-    { name: "$5K AWS credits", cost: 500, icon: Coupon01Icon },
-    { name: "5 hours legal review", cost: 600, icon: Coupon01Icon },
+    {
+      name: "Mentor slot · 1 hour",
+      cost: 200,
+      icon: Mortarboard02Icon,
+      image: IMG("1542744173-8e7e53415bb0"),
+    },
+    {
+      name: "Lab equipment access",
+      cost: 350,
+      icon: Coins01Icon,
+      image: IMG("1532187863486-abf9dbad1b69"),
+    },
+    {
+      name: "$5K AWS credits",
+      cost: 500,
+      icon: Coupon01Icon,
+      image: IMG("1558494949-ef010cbdcc31"),
+    },
+    {
+      name: "5 hours legal review",
+      cost: 600,
+      icon: Coupon01Icon,
+      image: IMG("1589829545856-d10d557cf95f"),
+    },
   ],
   Visibility: [
-    { name: "Newsletter feature", cost: 400, icon: Megaphone01Icon },
-    { name: "LinkedIn shoutout", cost: 250, icon: Megaphone01Icon },
-    { name: "Lobby TV slot · 1 week", cost: 300, icon: Megaphone01Icon },
-    { name: "Speaker invite", cost: 700, icon: Megaphone01Icon },
+    {
+      name: "Newsletter feature",
+      cost: 400,
+      icon: Megaphone01Icon,
+      image: IMG("1499336315816-097655dcfbda"),
+    },
+    {
+      name: "LinkedIn shoutout",
+      cost: 250,
+      icon: Megaphone01Icon,
+      image: IMG("1611944212129-29977ae1398c"),
+    },
+    {
+      name: "Lobby TV slot · 1 week",
+      cost: 300,
+      icon: Megaphone01Icon,
+      image: IMG("1551817958-d9d86fb29431"),
+    },
+    {
+      name: "Speaker invite",
+      cost: 700,
+      icon: Megaphone01Icon,
+      image: IMG("1475721027785-f74eccf877e2"),
+    },
   ],
   Network: [
-    { name: "Investor intro", cost: 800, icon: UserGroupIcon },
-    { name: "Exec 1:1", cost: 600, icon: UserGroupIcon },
-    { name: "Demo Day priority", cost: 1200, icon: StarCircleIcon },
-    { name: "Startup of the Month", cost: 2000, icon: StarAward01Icon },
+    {
+      name: "Investor intro",
+      cost: 800,
+      icon: UserGroupIcon,
+      image: IMG("1556761175-5973dc0f32e7"),
+    },
+    {
+      name: "Exec 1:1",
+      cost: 600,
+      icon: UserGroupIcon,
+      image: IMG("1521737711867-e3b97375f902"),
+    },
+    {
+      name: "Demo Day priority",
+      cost: 1200,
+      icon: StarCircleIcon,
+      image: IMG("1540575467063-178a50c2df87"),
+    },
+    {
+      name: "Startup of the Month",
+      cost: 2000,
+      icon: StarAward01Icon,
+      image: IMG("1567427017947-545c5f8d16ad"),
+    },
   ],
   Tangible: [
-    { name: "QSTP café credits", cost: 100, icon: Coffee01Icon },
-    { name: "Conference ticket", cost: 900, icon: Coupon01Icon },
-    { name: "Travel stipend", cost: 1500, icon: PlaneIcon },
+    {
+      name: "QSTP café credits",
+      cost: 100,
+      icon: Coffee01Icon,
+      image: IMG("1495474472287-4d71bcdd2085"),
+    },
+    {
+      name: "Conference ticket",
+      cost: 900,
+      icon: Coupon01Icon,
+      image: IMG("1505373877841-8d25f7d46678"),
+    },
+    {
+      name: "Travel stipend",
+      cost: 1500,
+      icon: PlaneIcon,
+      image: IMG("1436491865332-7a61a109cc05"),
+    },
   ],
 }
 
@@ -288,13 +366,21 @@ export default async function FounderRewardsPage() {
                     const canAfford = points >= item.cost
                     return (
                       <Card key={item.name} size="sm">
-                        <CardContent className="flex flex-col gap-3">
-                          <div className="flex h-20 items-center justify-center rounded-md bg-muted/50">
+                        <div className="relative">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={item.image}
+                            alt=""
+                            className="h-24 w-full object-cover"
+                          />
+                          <div className="absolute right-2 top-2 flex size-7 items-center justify-center rounded-md bg-background/90 shadow-sm backdrop-blur">
                             <HugeiconsIcon
                               icon={item.icon}
-                              className="size-8 text-muted-foreground"
+                              className="size-3.5"
                             />
                           </div>
+                        </div>
+                        <CardContent className="flex flex-col gap-3">
                           <div>
                             <div className="text-sm font-medium leading-snug">
                               {item.name}
