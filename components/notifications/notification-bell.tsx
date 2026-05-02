@@ -4,6 +4,7 @@ import { Notification03Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useRef, useState } from "react"
+import { toast } from "sonner"
 
 import { Badge } from "@/components/ui/badge"
 import {
@@ -15,6 +16,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+
+// Module-level so two bell instances (sidebar + header) don't double-toast.
+const toastedIds = new Set<string>()
+let seeded = false
 
 type NotificationContent = {
   title?: string
@@ -70,6 +75,30 @@ export function NotificationBell({
       })
       if (!res.ok) return
       const body = (await res.json()) as Payload
+
+      if (!seeded) {
+        // First load across all bell instances: seed so we don't toast for
+        // already-existing notifications.
+        seeded = true
+        body.items.forEach((i) => toastedIds.add(i.id))
+      } else {
+        for (const item of body.items) {
+          if (item.read_at) continue
+          if (toastedIds.has(item.id)) continue
+          toastedIds.add(item.id)
+          const c = item.content ?? {}
+          toast(c.title ?? "New notification", {
+            description: c.message,
+            action: c.action_url
+              ? {
+                  label: "Open",
+                  onClick: () => router.push(c.action_url!),
+                }
+              : undefined,
+          })
+        }
+      }
+
       setItems(body.items)
       setUnread(body.unread)
     } catch {
@@ -77,7 +106,7 @@ export function NotificationBell({
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [router])
 
   useEffect(() => {
     refresh()

@@ -37,7 +37,7 @@ const TYPE_OPTIONS: { value: ReportQuestionType; label: string }[] = [
 ]
 
 let keySeq = 0
-const nextKey = () => `q-${++keySeq}-${Date.now()}`
+const nextKey = () => `q-${++keySeq}`
 
 export function TemplateEditor({
   templateId,
