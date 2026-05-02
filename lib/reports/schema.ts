@@ -21,6 +21,24 @@ export type ReportAnswerValue = string | number | boolean | null
 
 export type ReportAnswers = Record<string, ReportAnswerValue>
 
+export type ReportFieldSource =
+  | "manual"
+  | "startup_profile"
+  | "stripe"
+  | "google_workspace"
+  | "google_drive"
+  | "google_calendar"
+  | "linkedin"
+
+export type VerifiedField = {
+  source: ReportFieldSource
+  is_verified: boolean
+  pulled_at?: string
+  label?: string
+}
+
+export type VerifiedFields = Record<string, VerifiedField>
+
 const QUESTION_TYPES: ReadonlySet<ReportQuestionType> = new Set([
   "currency",
   "number",
@@ -30,7 +48,9 @@ const QUESTION_TYPES: ReadonlySet<ReportQuestionType> = new Set([
   "boolean",
 ])
 
-export function parseQuestions(value: Json | null | undefined): ReportQuestion[] {
+export function parseQuestions(
+  value: Json | null | undefined
+): ReportQuestion[] {
   if (!Array.isArray(value)) return []
   const out: ReportQuestion[] = []
   const seen = new Set<string>()
@@ -40,7 +60,8 @@ export function parseQuestions(value: Json | null | undefined): ReportQuestion[]
     const id = typeof obj.id === "string" ? obj.id.trim() : ""
     const label = typeof obj.label === "string" ? obj.label.trim() : ""
     const type =
-      typeof obj.type === "string" && QUESTION_TYPES.has(obj.type as ReportQuestionType)
+      typeof obj.type === "string" &&
+      QUESTION_TYPES.has(obj.type as ReportQuestionType)
         ? (obj.type as ReportQuestionType)
         : null
     if (!id || !label || !type || seen.has(id)) continue
@@ -80,6 +101,40 @@ export function parseAnswers(value: Json | null | undefined): ReportAnswers {
       typeof v === "boolean"
     ) {
       out[k] = v
+    }
+  }
+  return out
+}
+
+const FIELD_SOURCES: ReadonlySet<ReportFieldSource> = new Set([
+  "manual",
+  "startup_profile",
+  "stripe",
+  "google_workspace",
+  "google_drive",
+  "google_calendar",
+  "linkedin",
+])
+
+export function parseVerifiedFields(
+  value: Json | null | undefined
+): VerifiedFields {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {}
+  const out: VerifiedFields = {}
+  for (const [fieldId, raw] of Object.entries(value)) {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) continue
+    const obj = raw as Record<string, unknown>
+    const source =
+      typeof obj.source === "string" &&
+      FIELD_SOURCES.has(obj.source as ReportFieldSource)
+        ? (obj.source as ReportFieldSource)
+        : null
+    if (!source) continue
+    out[fieldId] = {
+      source,
+      is_verified: obj.is_verified === true,
+      pulled_at: typeof obj.pulled_at === "string" ? obj.pulled_at : undefined,
+      label: typeof obj.label === "string" ? obj.label : undefined,
     }
   }
   return out

@@ -3,6 +3,7 @@ import {
   type FounderSettingsData,
 } from "@/components/founder/settings/founder-settings"
 import { requireRole } from "@/lib/auth/require"
+import { createAdminClient } from "@/lib/supabase/admin"
 
 type ExtendedProfile = NonNullable<
   FounderSettingsData["startup"]
@@ -29,13 +30,18 @@ export default async function FounderSettingsPage() {
       .eq("founder_id", userId)
       .maybeSingle(),
   ])
+  const stripeStatus = startup
+    ? await loadStripeIntegrationStatus(startup.id)
+    : null
 
   const data: FounderSettingsData = {
     profile: {
       full_name: profile?.full_name ?? "",
       email: profile?.email ?? "",
       avatar_url: profile?.avatar_url ?? null,
-      language_preference: (profile?.language_preference ?? "en") as "en" | "ar",
+      language_preference: (profile?.language_preference ?? "en") as
+        | "en"
+        | "ar",
       preferences: (profile?.preferences as Preferences) ?? {},
     },
     startup: startup
@@ -46,12 +52,11 @@ export default async function FounderSettingsPage() {
           stage: startup.stage,
           cohort: startup.cohort,
           team_size: startup.team_size,
-          extended_profile:
-            (startup.extended_profile as ExtendedProfile) ?? {},
+          extended_profile: (startup.extended_profile as ExtendedProfile) ?? {},
           connected_integrations:
             (startup.connected_integrations as Record<string, boolean>) ?? {},
-          privacy_settings:
-            (startup.privacy_settings as PrivacySettings) ?? {},
+          integration_status: { stripe: stripeStatus },
+          privacy_settings: (startup.privacy_settings as PrivacySettings) ?? {},
         }
       : null,
   }
@@ -69,4 +74,28 @@ export default async function FounderSettingsPage() {
       <FounderSettings data={data} />
     </div>
   )
+}
+
+async function loadStripeIntegrationStatus(startupId: string) {
+  try {
+    const admin = createAdminClient()
+    const { data } = await admin
+      .from("startup_integration_connections")
+      .select(
+        "status, last_synced_at, last_sync_error, external_account_id, access_token"
+      )
+      .eq("startup_id", startupId)
+      .eq("provider", "stripe")
+      .maybeSingle()
+    if (!data) return null
+    return {
+      status: data.status,
+      last_synced_at: data.last_synced_at,
+      last_sync_error: data.last_sync_error,
+      external_account_id: data.external_account_id,
+      has_access_token: Boolean(data.access_token),
+    }
+  } catch {
+    return null
+  }
 }

@@ -8,6 +8,7 @@ import {
   submitReport,
   type ActionState,
 } from "@/app/founder/submit/actions"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -16,6 +17,8 @@ import {
   groupQuestions,
   type ReportAnswerValue,
   type ReportQuestion,
+  type VerifiedField,
+  type VerifiedFields,
 } from "@/lib/reports/schema"
 
 function answerToInputValue(value: ReportAnswerValue | undefined): string {
@@ -72,11 +75,13 @@ export function ReportForm({
   assignmentId,
   questions,
   initialAnswers,
+  verifiedFields,
   alreadySubmitted,
 }: {
   assignmentId: string
   questions: ReportQuestion[]
   initialAnswers: Record<string, ReportAnswerValue>
+  verifiedFields: VerifiedFields
   alreadySubmitted: boolean
 }) {
   const [draftState, draftAction, draftPending] = useActionState<
@@ -96,7 +101,7 @@ export function ReportForm({
 
       {groups.map((g) => (
         <div key={g.group} className="flex flex-col gap-4">
-          <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
+          <h2 className="text-sm font-medium tracking-wider text-muted-foreground uppercase">
             {g.group}
           </h2>
           <div className="grid gap-4 md:grid-cols-2">
@@ -110,6 +115,7 @@ export function ReportForm({
                   {q.unit ? (
                     <span className="text-muted-foreground">({q.unit})</span>
                   ) : null}
+                  <SourceBadge field={verifiedFields[q.id]} />
                 </Label>
                 <FieldInput q={q} defaultValue={initialAnswers[q.id]} />
               </div>
@@ -155,4 +161,34 @@ export function ReportForm({
       </div>
     </form>
   )
+}
+
+function SourceBadge({ field }: { field: VerifiedField | undefined }) {
+  if (!field || field.source === "manual") return null
+
+  return (
+    <Badge variant={field.is_verified ? "default" : "secondary"}>
+      {field.label ?? sourceLabel(field.source)}
+    </Badge>
+  )
+}
+
+function sourceLabel(source: VerifiedField["source"]): string {
+  switch (source) {
+    case "stripe":
+      return "Stripe"
+    case "google_workspace":
+      return "Google Workspace"
+    case "google_drive":
+      return "Google Drive"
+    case "google_calendar":
+      return "Google Calendar"
+    case "linkedin":
+      return "LinkedIn"
+    case "startup_profile":
+      return "Profile"
+    case "manual":
+    default:
+      return "Manual"
+  }
 }

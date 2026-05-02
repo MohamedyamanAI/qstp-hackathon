@@ -119,6 +119,68 @@ export type Database = {
           },
         ]
       }
+      startup_integration_connections: {
+        Row: {
+          access_token: string | null
+          created_at: string
+          external_account_id: string | null
+          id: string
+          last_sync_error: string | null
+          last_synced_at: string | null
+          livemode: boolean
+          metadata: Json
+          provider: string
+          refresh_token: string | null
+          scopes: string[]
+          startup_id: string
+          status: string
+          token_expires_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          access_token?: string | null
+          created_at?: string
+          external_account_id?: string | null
+          id?: string
+          last_sync_error?: string | null
+          last_synced_at?: string | null
+          livemode?: boolean
+          metadata?: Json
+          provider: string
+          refresh_token?: string | null
+          scopes?: string[]
+          startup_id: string
+          status?: string
+          token_expires_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string | null
+          created_at?: string
+          external_account_id?: string | null
+          id?: string
+          last_sync_error?: string | null
+          last_synced_at?: string | null
+          livemode?: boolean
+          metadata?: Json
+          provider?: string
+          refresh_token?: string | null
+          scopes?: string[]
+          startup_id?: string
+          status?: string
+          token_expires_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "startup_integration_connections_startup_id_fkey"
+            columns: ["startup_id"]
+            isOneToOne: false
+            referencedRelation: "startups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       opportunities: {
         Row: {
           category: Database["public"]["Enums"]["opportunity_category_enum"]

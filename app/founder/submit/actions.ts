@@ -5,14 +5,32 @@ import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 
 import { requireRole } from "@/lib/auth/require"
+import {
+  buildReportPrefill,
+  mergePrefillIntoDraft,
+  reconcileVerifiedFieldsAfterEdit,
+} from "@/lib/integrations/report-prefill"
+import { syncStripeForStartup } from "@/lib/integrations/stripe"
 import { dispatchToUsers } from "@/lib/notifications/dispatch"
-import { buildMetricTiles, draftInvestorEmail, type DraftedEmail } from "@/lib/reports/investor-email/draft"
+import {
+  buildFilingPack,
+  parseExtendedProfile,
+  type FilingFlag,
+  type FilingPack,
+} from "@/lib/reports/government-filing/build"
+import { renderFilingPdf } from "@/lib/reports/government-filing/pdf"
+import {
+  buildMetricTiles,
+  draftInvestorEmail,
+  type DraftedEmail,
+} from "@/lib/reports/investor-email/draft"
 import { renderInvestorPdf } from "@/lib/reports/investor-email/pdf"
 import { type MetricTile } from "@/lib/reports/investor-email/template"
 import {
   coerceAnswer,
   parseAnswers,
   parseQuestions,
+  parseVerifiedFields,
   type ReportAnswers,
 } from "@/lib/reports/schema"
 import type { Json } from "@/lib/supabase/database.types"
@@ -27,7 +45,7 @@ async function loadAssignmentForFounder(
   const { data, error } = await supabase
     .from("report_assignments")
     .select(
-      "id, status, submission_id, publication_id, startup_id, startups!inner(founder_id), report_publications!inner(period_start, period_end, questions)"
+      "id, status, submission_id, publication_id, startup_id, startups!inner(founder_id, name, sector, stage, team_size, connected_integrations, extended_profile), report_publications!inner(period_start, period_end, questions)"
     )
     .eq("id", assignmentId)
     .maybeSingle()
@@ -35,6 +53,56 @@ async function loadAssignmentForFounder(
   if (error || !data) return null
   if (data.startups.founder_id !== founderId) return null
   return data
+}
+
+async function applyReportPrefillToSubmission({
+  supabase,
+  assignment,
+  submissionId,
+}: {
+  supabase: Awaited<ReturnType<typeof requireRole>>["supabase"]
+  assignment: NonNullable<Awaited<ReturnType<typeof loadAssignmentForFounder>>>
+  submissionId: string
+}) {
+  const questions = parseQuestions(assignment.report_publications.questions)
+  if (questions.length === 0) return
+
+  const { data: submission } = await supabase
+    .from("kpi_submissions")
+    .select("metrics, verified_fields")
+    .eq("id", submissionId)
+    .maybeSingle()
+  const { data: startup } = await supabase
+    .from("startups")
+    .select(
+      "name, sector, stage, team_size, connected_integrations, extended_profile"
+    )
+    .eq("id", assignment.startup_id)
+    .maybeSingle()
+  if (!startup) return
+
+  const prefill = buildReportPrefill({
+    startup,
+    questions,
+  })
+  const merged = mergePrefillIntoDraft({
+    currentAnswers: parseAnswers(submission?.metrics ?? null),
+    currentVerifiedFields: parseVerifiedFields(
+      submission?.verified_fields ?? null
+    ),
+    prefillAnswers: prefill.answers,
+    prefillVerifiedFields: prefill.verifiedFields,
+  })
+
+  if (!merged.changed) return
+
+  await supabase
+    .from("kpi_submissions")
+    .update({
+      metrics: merged.answers as unknown as Json,
+      verified_fields: merged.verifiedFields as unknown as Json,
+    })
+    .eq("id", submissionId)
 }
 
 export async function openAssignment(formData: FormData): Promise<void> {
@@ -82,8 +150,40 @@ export async function openAssignment(formData: FormData): Promise<void> {
       .eq("id", assignment.id)
   }
 
+  await syncConnectedIntegrationsForAssignment(assignment)
+
+  await applyReportPrefillToSubmission({
+    supabase,
+    assignment,
+    submissionId,
+  })
+
   revalidatePath("/founder/submit")
   redirect(`/founder/submit/${assignment.id}`)
+}
+
+async function syncConnectedIntegrationsForAssignment(
+  assignment: NonNullable<Awaited<ReturnType<typeof loadAssignmentForFounder>>>
+) {
+  const integrations = asRecord(assignment.startups.connected_integrations)
+  if (integrations.stripe !== true) return
+
+  try {
+    await syncStripeForStartup({
+      startupId: assignment.startup_id,
+      periodStart: assignment.report_publications.period_start,
+      periodEnd: assignment.report_publications.period_end,
+    })
+  } catch {
+    // Prefill can still use the most recent successful snapshot.
+  }
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return value as Record<string, unknown>
+  }
+  return {}
 }
 
 async function readAnswersFromForm(
@@ -122,9 +222,26 @@ export async function saveDraft(
   const questions = parseQuestions(assignment.report_publications.questions)
   const answers = await readAnswersFromForm(formData, questions)
 
+  const { data: existing } = await supabase
+    .from("kpi_submissions")
+    .select("metrics, verified_fields")
+    .eq("id", assignment.submission_id)
+    .maybeSingle()
+  const verifiedFields = reconcileVerifiedFieldsAfterEdit({
+    questions,
+    previousAnswers: parseAnswers(existing?.metrics ?? null),
+    previousVerifiedFields: parseVerifiedFields(
+      existing?.verified_fields ?? null
+    ),
+    nextAnswers: answers,
+  })
+
   const { error } = await supabase
     .from("kpi_submissions")
-    .update({ metrics: answers as unknown as Json })
+    .update({
+      metrics: answers as unknown as Json,
+      verified_fields: verifiedFields as unknown as Json,
+    })
     .eq("id", assignment.submission_id)
 
   if (error) return { error: error.message }
@@ -152,6 +269,19 @@ export async function submitReport(
 
   const questions = parseQuestions(assignment.report_publications.questions)
   const answers = await readAnswersFromForm(formData, questions)
+  const { data: existing } = await supabase
+    .from("kpi_submissions")
+    .select("metrics, verified_fields")
+    .eq("id", assignment.submission_id)
+    .maybeSingle()
+  const verifiedFields = reconcileVerifiedFieldsAfterEdit({
+    questions,
+    previousAnswers: parseAnswers(existing?.metrics ?? null),
+    previousVerifiedFields: parseVerifiedFields(
+      existing?.verified_fields ?? null
+    ),
+    nextAnswers: answers,
+  })
 
   const missingRequired = questions.filter(
     (q) => q.required && (answers[q.id] === null || answers[q.id] === undefined)
@@ -161,7 +291,10 @@ export async function submitReport(
     // Persist what we have as a draft before bailing.
     await supabase
       .from("kpi_submissions")
-      .update({ metrics: answers as unknown as Json })
+      .update({
+        metrics: answers as unknown as Json,
+        verified_fields: verifiedFields as unknown as Json,
+      })
       .eq("id", assignment.submission_id)
     return { error: `Required: ${labels}` }
   }
@@ -172,6 +305,7 @@ export async function submitReport(
     .from("kpi_submissions")
     .update({
       metrics: answers as unknown as Json,
+      verified_fields: verifiedFields as unknown as Json,
       status: "submitted",
       submitted_at: submittedAt,
     })
@@ -247,8 +381,10 @@ export type GeneratedInvestorEmail = {
 function periodLabel(start: string, end: string): string {
   const s = new Date(start)
   const e = new Date(end)
-  const fmt = (d: Date) => d.toLocaleString("en-US", { month: "short", year: "numeric" })
-  if (s.getMonth() === e.getMonth() && s.getFullYear() === e.getFullYear()) return fmt(s)
+  const fmt = (d: Date) =>
+    d.toLocaleString("en-US", { month: "short", year: "numeric" })
+  if (s.getMonth() === e.getMonth() && s.getFullYear() === e.getFullYear())
+    return fmt(s)
   return `${fmt(s)} – ${fmt(e)}`
 }
 
@@ -274,7 +410,9 @@ async function loadInvestorEmailContext(
 
   const { data: submission } = await supabase
     .from("kpi_submissions")
-    .select("id, metrics, generated_outputs, period_start, period_end, submitted_at")
+    .select(
+      "id, metrics, generated_outputs, period_start, period_end, submitted_at"
+    )
     .eq("id", assignment.submission_id)
     .maybeSingle()
   if (!submission) return null
@@ -308,9 +446,14 @@ export async function generateInvestorEmail(
 
   const questions = parseQuestions(ctx.assignment.publication.questions)
   const answers = parseAnswers(ctx.submission.metrics)
-  const previousAnswers = ctx.previous ? parseAnswers(ctx.previous.metrics) : null
+  const previousAnswers = ctx.previous
+    ? parseAnswers(ctx.previous.metrics)
+    : null
 
-  const period = periodLabel(ctx.submission.period_start, ctx.submission.period_end)
+  const period = periodLabel(
+    ctx.submission.period_start,
+    ctx.submission.period_end
+  )
   const startupName = ctx.assignment.startup.name
   const founderName = ctx.founder.full_name
   const founderEmail = ctx.founder.email
@@ -327,7 +470,10 @@ export async function generateInvestorEmail(
       previousAnswers,
     })
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Draft generation failed." }
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : "Draft generation failed.",
+    }
   }
 
   const tiles = buildMetricTiles({
@@ -350,16 +496,23 @@ export async function generateInvestorEmail(
       wins: drafted.wins,
       challenge: drafted.challenge,
       asks: drafted.asks,
-      generatedAt: new Date().toLocaleDateString("en-US", { dateStyle: "medium" }),
+      generatedAt: new Date().toLocaleDateString("en-US", {
+        dateStyle: "medium",
+      }),
     })
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "PDF render failed." }
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : "PDF render failed.",
+    }
   }
 
   // Cache the draft (excluding PDF) on the submission so the send step is
   // deterministic and can re-render the PDF from the same data.
   const existingOutputs =
-    ctx.submission.generated_outputs && typeof ctx.submission.generated_outputs === "object" && !Array.isArray(ctx.submission.generated_outputs)
+    ctx.submission.generated_outputs &&
+    typeof ctx.submission.generated_outputs === "object" &&
+    !Array.isArray(ctx.submission.generated_outputs)
       ? (ctx.submission.generated_outputs as Record<string, unknown>)
       : {}
 
@@ -421,16 +574,25 @@ export async function sendInvestorEmail(
   }
 
   const recipients = Array.from(
-    new Set(input.recipients.map((r) => r.trim().toLowerCase()).filter((r) => EMAIL_RE.test(r)))
+    new Set(
+      input.recipients
+        .map((r) => r.trim().toLowerCase())
+        .filter((r) => EMAIL_RE.test(r))
+    )
   )
-  if (recipients.length === 0) return { ok: false, error: "Add at least one valid investor email." }
+  if (recipients.length === 0)
+    return { ok: false, error: "Add at least one valid investor email." }
 
   const subject = input.subject.trim()
   if (!subject) return { ok: false, error: "Subject is required." }
   const bodyText = input.bodyText.trim()
   if (!bodyText) return { ok: false, error: "Body is required." }
 
-  const ctx = await loadInvestorEmailContext(supabase, userId, input.assignmentId)
+  const ctx = await loadInvestorEmailContext(
+    supabase,
+    userId,
+    input.assignmentId
+  )
   if (!ctx) return { ok: false, error: "Submission not found." }
   if (!ctx.founder) return { ok: false, error: "Founder profile missing." }
 
@@ -438,7 +600,8 @@ export async function sendInvestorEmail(
     ctx.submission.generated_outputs &&
     typeof ctx.submission.generated_outputs === "object" &&
     !Array.isArray(ctx.submission.generated_outputs)
-      ? (ctx.submission.generated_outputs as Record<string, unknown>).investor_email
+      ? (ctx.submission.generated_outputs as Record<string, unknown>)
+          .investor_email
       : null
   if (!cached || typeof cached !== "object") {
     return { ok: false, error: "Generate the email first." }
@@ -450,7 +613,10 @@ export async function sendInvestorEmail(
     tiles: MetricTile[]
   }
 
-  const period = periodLabel(ctx.submission.period_start, ctx.submission.period_end)
+  const period = periodLabel(
+    ctx.submission.period_start,
+    ctx.submission.period_end
+  )
   const startupName = ctx.assignment.startup.name
   const founderName = ctx.founder.full_name
   const founderEmail = ctx.founder.email
@@ -465,19 +631,26 @@ export async function sendInvestorEmail(
       wins: draft.wins,
       challenge: draft.challenge,
       asks: draft.asks,
-      generatedAt: new Date().toLocaleDateString("en-US", { dateStyle: "medium" }),
+      generatedAt: new Date().toLocaleDateString("en-US", {
+        dateStyle: "medium",
+      }),
     })
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "PDF render failed." }
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : "PDF render failed.",
+    }
   }
 
   const fullBody = `${bodyText}\n\n— ${founderName}\nFounder, ${startupName}`
   const safeFile = `${startupName.replace(/[^A-Za-z0-9]+/g, "-")}-Update-${period.replace(/[^A-Za-z0-9]+/g, "-")}.pdf`
 
+  const fromHeader = buildFromHeader(founderName, startupName, fromEmail)
+
   const resend = new Resend(apiKey)
   try {
     const result = await resend.emails.send({
-      from: `${founderName} <${fromEmail}>`,
+      from: fromHeader,
       to: recipients,
       replyTo: founderEmail,
       subject,
@@ -496,12 +669,17 @@ export async function sendInvestorEmail(
 
   // Mark sent
   const existingOutputs =
-    ctx.submission.generated_outputs && typeof ctx.submission.generated_outputs === "object" && !Array.isArray(ctx.submission.generated_outputs)
+    ctx.submission.generated_outputs &&
+    typeof ctx.submission.generated_outputs === "object" &&
+    !Array.isArray(ctx.submission.generated_outputs)
       ? (ctx.submission.generated_outputs as Record<string, unknown>)
       : {}
-  const existingEmail = (existingOutputs.investor_email && typeof existingOutputs.investor_email === "object" && !Array.isArray(existingOutputs.investor_email)
-    ? (existingOutputs.investor_email as Record<string, unknown>)
-    : {})
+  const existingEmail =
+    existingOutputs.investor_email &&
+    typeof existingOutputs.investor_email === "object" &&
+    !Array.isArray(existingOutputs.investor_email)
+      ? (existingOutputs.investor_email as Record<string, unknown>)
+      : {}
 
   await supabase
     .from("kpi_submissions")
@@ -521,6 +699,257 @@ export async function sendInvestorEmail(
 
   revalidatePath(`/founder/submit/${input.assignmentId}`)
   return { ok: true, sentTo: recipients.length }
+}
+
+function buildFromHeader(
+  founderName: string,
+  startupName: string,
+  fromEnv: string
+): string {
+  const env = fromEnv.trim()
+  // Env may already be a full mailbox like "Brand <hi@brand.com>"; if so, use it.
+  const envMailboxMatch = /<([^>]+)>/.exec(env)
+  const bareEmail = envMailboxMatch ? envMailboxMatch[1].trim() : env
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(bareEmail)) return env
+
+  const rawName = (founderName?.trim() || startupName?.trim() || "").replace(
+    /[\r\n]+/g,
+    " "
+  )
+  // Strip characters that can't appear in a display name even when quoted.
+  const cleaned = rawName.replace(/["\\]/g, "").trim()
+  if (!cleaned) return bareEmail
+
+  // RFC 5322: if name contains specials, it must be a quoted-string.
+  const needsQuoting = /[(),:;<>@\[\]."]/.test(cleaned)
+  const display = needsQuoting ? `"${cleaned}"` : cleaned
+  return `${display} <${bareEmail}>`
+}
+
+// ---------------------------------------------------------------------------
+// Government filing pack — generate Q15 + UBO PDFs from the latest submission
+// ---------------------------------------------------------------------------
+
+export type FilingDocKind =
+  | "pack"
+  | "q15"
+  | "ubo"
+  | "moci"
+  | "gta"
+  | "qdb"
+  | "invest_qatar"
+
+export type GeneratedFilingPack = {
+  pack: FilingPack
+  pdfBase64: Record<FilingDocKind, string>
+  meta: {
+    startupName: string
+    legalNameEn: string
+    qfcRegistrationNumber: string
+    periodLabel: string
+  }
+  flags: FilingFlag[]
+}
+
+export type GenerateGovernmentFilingsResult =
+  | { ok: true; data: GeneratedFilingPack }
+  | { ok: false; error: string }
+
+export async function generateGovernmentFilings(
+  assignmentId: string
+): Promise<GenerateGovernmentFilingsResult> {
+  const { supabase, userId } = await requireRole("founder")
+
+  const { data: assignment } = await supabase
+    .from("report_assignments")
+    .select(
+      "id, submission_id, startup_id, startup:startups!inner(id, name, founder_id, extended_profile), publication:report_publications!inner(period_start, period_end, questions)"
+    )
+    .eq("id", assignmentId)
+    .maybeSingle()
+
+  if (!assignment || assignment.startup.founder_id !== userId) {
+    return { ok: false, error: "Assignment not found." }
+  }
+  if (!assignment.submission_id) {
+    return { ok: false, error: "Submission not found." }
+  }
+
+  const { data: submission } = await supabase
+    .from("kpi_submissions")
+    .select("id, metrics, generated_outputs, period_start, period_end")
+    .eq("id", assignment.submission_id)
+    .maybeSingle()
+  if (!submission) return { ok: false, error: "Submission not found." }
+
+  const { data: founder } = await supabase
+    .from("profiles")
+    .select("full_name")
+    .eq("id", userId)
+    .maybeSingle()
+  if (!founder) return { ok: false, error: "Founder profile missing." }
+
+  const questions = parseQuestions(assignment.publication.questions)
+  const answers = parseAnswers(submission.metrics)
+  const extendedProfile = parseExtendedProfile(
+    assignment.startup.extended_profile
+  )
+
+  const pack = buildFilingPack({
+    startupName: assignment.startup.name,
+    founderName: founder.full_name,
+    extendedProfile,
+    periodStart: submission.period_start,
+    periodEnd: submission.period_end,
+    questions,
+    answers,
+  })
+
+  const docKinds: FilingDocKind[] = [
+    "pack",
+    "q15",
+    "ubo",
+    "moci",
+    "gta",
+    "qdb",
+    "invest_qatar",
+  ]
+  let pdfs: Uint8Array[]
+  try {
+    pdfs = await Promise.all(docKinds.map((d) => renderFilingPdf(pack, d)))
+  } catch (e) {
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : "Filing render failed.",
+    }
+  }
+  const pdfBase64 = Object.fromEntries(
+    docKinds.map((d, i) => [d, bytesToBase64(pdfs[i])])
+  ) as Record<FilingDocKind, string>
+
+  const existingOutputs =
+    submission.generated_outputs &&
+    typeof submission.generated_outputs === "object" &&
+    !Array.isArray(submission.generated_outputs)
+      ? (submission.generated_outputs as Record<string, unknown>)
+      : {}
+  const existingFiling =
+    existingOutputs.government_filings &&
+    typeof existingOutputs.government_filings === "object" &&
+    !Array.isArray(existingOutputs.government_filings)
+      ? (existingOutputs.government_filings as Record<string, unknown>)
+      : {}
+
+  await supabase
+    .from("kpi_submissions")
+    .update({
+      generated_outputs: {
+        ...existingOutputs,
+        government_filings: {
+          ...existingFiling,
+          generatedAt: new Date().toISOString(),
+          flags: pack.flags,
+          meta: pack.meta,
+        },
+      } as unknown as Json,
+    })
+    .eq("id", submission.id)
+
+  return {
+    ok: true,
+    data: {
+      pack,
+      pdfBase64,
+      meta: {
+        startupName: assignment.startup.name,
+        legalNameEn: pack.meta.legalNameEn,
+        qfcRegistrationNumber: pack.meta.qfcRegistrationNumber,
+        periodLabel: pack.meta.periodLabel,
+      },
+      flags: pack.flags,
+    },
+  }
+}
+
+export type MarkFilingSubmittedInput = {
+  assignmentId: string
+  doc: FilingDocKind
+  reference?: string
+}
+
+export type MarkFilingSubmittedResult =
+  | { ok: true; submittedAt: string }
+  | { ok: false; error: string }
+
+export async function markFilingSubmitted(
+  input: MarkFilingSubmittedInput
+): Promise<MarkFilingSubmittedResult> {
+  const { supabase, userId } = await requireRole("founder")
+
+  const { data: assignment } = await supabase
+    .from("report_assignments")
+    .select(
+      "id, submission_id, startup_id, startup:startups!inner(founder_id)"
+    )
+    .eq("id", input.assignmentId)
+    .maybeSingle()
+  if (!assignment || assignment.startup.founder_id !== userId) {
+    return { ok: false, error: "Assignment not found." }
+  }
+  if (!assignment.submission_id) {
+    return { ok: false, error: "Submission not found." }
+  }
+
+  const { data: submission } = await supabase
+    .from("kpi_submissions")
+    .select("generated_outputs")
+    .eq("id", assignment.submission_id)
+    .maybeSingle()
+  if (!submission) return { ok: false, error: "Submission not found." }
+
+  const submittedAt = new Date().toISOString()
+  const existingOutputs =
+    submission.generated_outputs &&
+    typeof submission.generated_outputs === "object" &&
+    !Array.isArray(submission.generated_outputs)
+      ? (submission.generated_outputs as Record<string, unknown>)
+      : {}
+  const existingFiling =
+    existingOutputs.government_filings &&
+    typeof existingOutputs.government_filings === "object" &&
+    !Array.isArray(existingOutputs.government_filings)
+      ? (existingOutputs.government_filings as Record<string, unknown>)
+      : {}
+  const submitted =
+    existingFiling.submitted &&
+    typeof existingFiling.submitted === "object" &&
+    !Array.isArray(existingFiling.submitted)
+      ? (existingFiling.submitted as Record<string, unknown>)
+      : {}
+
+  const next = {
+    ...submitted,
+    [input.doc]: {
+      submittedAt,
+      reference: input.reference?.trim() || null,
+    },
+  }
+
+  await supabase
+    .from("kpi_submissions")
+    .update({
+      generated_outputs: {
+        ...existingOutputs,
+        government_filings: {
+          ...existingFiling,
+          submitted: next,
+        },
+      } as unknown as Json,
+    })
+    .eq("id", assignment.submission_id)
+
+  revalidatePath(`/founder/submit/${input.assignmentId}`)
+  return { ok: true, submittedAt }
 }
 
 function bytesToBase64(bytes: Uint8Array): string {

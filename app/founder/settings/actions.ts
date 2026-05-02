@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 
 import { requireRole } from "@/lib/auth/require"
+import { syncStripeForStartup } from "@/lib/integrations/stripe"
 import type { Json } from "@/lib/supabase/database.types"
 
 export type ActionState = { error?: string; ok?: boolean } | undefined
@@ -135,6 +136,36 @@ export async function updateIntegrations(
   return { ok: true }
 }
 
+export async function syncStripeIntegration(): Promise<ActionState> {
+  const { supabase, userId } = await requireRole("founder")
+  const startup = await loadStartup(supabase, userId)
+  if (!startup) return { error: "No startup found." }
+
+  const now = new Date()
+  const periodStart = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)
+  )
+    .toISOString()
+    .slice(0, 10)
+  const periodEnd = now.toISOString().slice(0, 10)
+
+  try {
+    const result = await syncStripeForStartup({
+      startupId: startup.id,
+      periodStart,
+      periodEnd,
+    })
+    if (!result.ok) return { error: result.error }
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "Stripe sync failed.",
+    }
+  }
+
+  revalidatePath("/founder/settings")
+  return { ok: true }
+}
+
 // ---- Cap Table -------------------------------------------------------------
 
 export async function addShareholder(
@@ -261,7 +292,8 @@ export async function updatePrivacy(
   const next = {
     cohort_benchmarking: b(formData.get("cohort_benchmarking")),
     public_wins: b(formData.get("public_wins")),
-    portfolio_visibility: s(formData.get("portfolio_visibility")) || "team_only",
+    portfolio_visibility:
+      s(formData.get("portfolio_visibility")) || "team_only",
     mood_visibility: s(formData.get("mood_visibility")) || "private",
   }
 

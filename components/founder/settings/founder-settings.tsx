@@ -19,6 +19,7 @@ import {
   type ActionState,
   addShareholder,
   removeShareholder,
+  syncStripeIntegration,
   updateCompliance,
   updateIntegrations,
   updatePreferences,
@@ -88,6 +89,15 @@ export type FounderSettingsData = {
       cap_table?: Shareholder[]
     }
     connected_integrations: Record<string, boolean>
+    integration_status?: {
+      stripe?: {
+        status: string
+        last_synced_at: string | null
+        last_sync_error: string | null
+        external_account_id: string | null
+        has_access_token: boolean
+      } | null
+    }
     privacy_settings: {
       cohort_benchmarking?: boolean
       public_wins?: boolean
@@ -103,30 +113,35 @@ const INTEGRATION_DEFS = [
     label: "Stripe",
     desc: "Revenue, MRR, customers — auto-pulled.",
     icon: CreditCardIcon,
+    available: true,
   },
   {
     key: "github",
     label: "GitHub",
     desc: "Commit activity, releases, issue velocity.",
     icon: Github01Icon,
+    available: false,
   },
   {
     key: "hubspot",
     label: "HubSpot",
     desc: "Pipeline, deals, customer count.",
     icon: PieChartIcon,
+    available: false,
   },
   {
     key: "linkedin",
     label: "LinkedIn",
     desc: "Headcount, hires, departures.",
     icon: Linkedin01Icon,
+    available: false,
   },
   {
     key: "google_analytics",
     label: "Google Analytics",
     desc: "Active users, conversion, sessions.",
     icon: GoogleIcon,
+    available: false,
   },
 ] as const
 
@@ -362,61 +377,150 @@ function IntegrationsTab({ data }: { data: FounderSettingsData }) {
     undefined
   )
   const connected = data.startup?.connected_integrations ?? {}
-  const connectedCount = INTEGRATION_DEFS.filter(
-    (d) => connected[d.key]
-  ).length
+  const enabledCount = INTEGRATION_DEFS.filter((d) => connected[d.key]).length
+  const stripe = data.startup?.integration_status?.stripe
+  const stripeConnected =
+    stripe?.status === "connected" && stripe.has_access_token
 
   return (
-    <form action={action} className="flex flex-col gap-4">
-      <Card>
-        <CardHeader>
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <CardTitle>Integrations</CardTitle>
-              <CardDescription>
-                Connect data sources to skip manual entry.
-              </CardDescription>
+    <div className="flex flex-col gap-4">
+      <form action={action} className="flex flex-col gap-4">
+        <Card>
+          <CardHeader>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <CardTitle>Integrations</CardTitle>
+                <CardDescription>
+                  Enable data sources for prefill. Provider connections are
+                  managed below.
+                </CardDescription>
+              </div>
+              <Badge variant="secondary">
+                {enabledCount} of {INTEGRATION_DEFS.length} enabled
+              </Badge>
             </div>
-            <Badge variant="secondary">
-              {connectedCount} of {INTEGRATION_DEFS.length} connected
-            </Badge>
-          </div>
-        </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-2">
-          {INTEGRATION_DEFS.map((def) => {
-            const isOn = !!connected[def.key]
-            return (
-              <label
-                key={def.key}
-                htmlFor={`int_${def.key}`}
-                className="flex cursor-pointer items-start gap-3 rounded-lg border border-border/60 bg-card p-3 transition hover:border-foreground/30"
-              >
-                <div className="flex size-10 items-center justify-center rounded-md bg-muted">
-                  <HugeiconsIcon icon={def.icon} className="size-5" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">{def.label}</span>
-                    {isOn ? (
-                      <Badge variant="outline" className="h-5 text-[10px]">
-                        Connected
-                      </Badge>
-                    ) : null}
+          </CardHeader>
+          <CardContent className="grid gap-3 md:grid-cols-2">
+            {INTEGRATION_DEFS.map((def) => {
+              const isOn = !!connected[def.key]
+              return (
+                <label
+                  key={def.key}
+                  htmlFor={`int_${def.key}`}
+                  className="flex cursor-pointer items-start gap-3 rounded-lg border border-border/60 bg-card p-3 transition hover:border-foreground/30 has-disabled:cursor-not-allowed has-disabled:opacity-60"
+                >
+                  <div className="flex size-10 items-center justify-center rounded-md bg-muted">
+                    <HugeiconsIcon icon={def.icon} className="size-5" />
                   </div>
-                  <p className="text-xs text-muted-foreground">{def.desc}</p>
-                </div>
-                <Switch
-                  id={`int_${def.key}`}
-                  name={`int_${def.key}`}
-                  defaultChecked={isOn}
-                />
-              </label>
-            )
-          })}
-        </CardContent>
-      </Card>
-      <SubmitRow state={state} pending={pending} label="Save integrations" />
-    </form>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">{def.label}</span>
+                      {def.key === "stripe" && stripeConnected ? (
+                        <Badge variant="outline" className="h-5 text-[10px]">
+                          Connected
+                        </Badge>
+                      ) : isOn ? (
+                        <Badge variant="outline" className="h-5 text-[10px]">
+                          Enabled
+                        </Badge>
+                      ) : null}
+                      {!def.available ? (
+                        <Badge variant="secondary" className="h-5 text-[10px]">
+                          Coming soon
+                        </Badge>
+                      ) : null}
+                    </div>
+                    <p className="text-xs text-muted-foreground">{def.desc}</p>
+                  </div>
+                  <Switch
+                    id={`int_${def.key}`}
+                    name={`int_${def.key}`}
+                    defaultChecked={isOn}
+                    disabled={!def.available}
+                  />
+                </label>
+              )
+            })}
+          </CardContent>
+        </Card>
+        <SubmitRow state={state} pending={pending} label="Save integrations" />
+      </form>
+
+      <StripeConnectionPanel data={data} />
+    </div>
+  )
+}
+
+function StripeConnectionPanel({ data }: { data: FounderSettingsData }) {
+  const [state, action, pending] = useActionState<ActionState, FormData>(
+    syncStripeIntegration,
+    undefined
+  )
+  const stripe = data.startup?.integration_status?.stripe
+  const connected = stripe?.status === "connected" && stripe.has_access_token
+  const enabled = data.startup?.connected_integrations.stripe === true
+  const lastSynced = stripe?.last_synced_at
+    ? new Date(stripe.last_synced_at).toLocaleString("en-US", {
+        dateStyle: "medium",
+        timeStyle: "short",
+      })
+    : null
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <CardTitle>Stripe data sync</CardTitle>
+            <CardDescription>
+              Pull revenue, MRR, and customer metrics into report prefill.
+            </CardDescription>
+          </div>
+          <Badge variant={connected ? "secondary" : "outline"}>
+            {connected ? "Connected" : enabled ? "Enabled" : "Not connected"}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-3">
+        {stripe?.external_account_id ? (
+          <p className="text-xs text-muted-foreground">
+            Account {stripe.external_account_id}
+            {lastSynced ? ` · last synced ${lastSynced}` : ""}
+          </p>
+        ) : enabled ? (
+          <p className="text-xs text-muted-foreground">
+            Stripe prefill is enabled, but no OAuth account is connected yet.
+          </p>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            Connect Stripe to auto-fill financial fields when opening a report.
+          </p>
+        )}
+        {stripe?.last_sync_error ? (
+          <p className="text-xs text-destructive">{stripe.last_sync_error}</p>
+        ) : null}
+        <StatusBanner state={state} />
+        <div className="flex flex-wrap gap-2">
+          <Button asChild size="sm">
+            <a href="/api/integrations/stripe/connect">
+              {connected ? "Reconnect Stripe" : "Connect Stripe"}
+            </a>
+          </Button>
+          {connected ? (
+            <form action={action}>
+              <Button
+                type="submit"
+                size="sm"
+                variant="outline"
+                disabled={pending}
+              >
+                {pending ? "Syncing…" : "Sync now"}
+              </Button>
+            </form>
+          ) : null}
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 
