@@ -44,6 +44,7 @@ function DropletIcon({
       aria-hidden
     >
       <path d="M12 2.5c3.5 4.5 6.5 8.2 6.5 12a6.5 6.5 0 1 1-13 0c0-3.8 3-7.5 6.5-12Z" />
+      <path d="M8.5 18.5 A4.5 4.5 0 0 1 13 14 L13 18.5 A4.5 4.5 0 0 1 8.5 18.5Z" fill="white" opacity="0.4" />
     </svg>
   )
 }
@@ -225,7 +226,7 @@ export function InterdependenceInfographic() {
             renderIcon={({ size, color }) => (
               <HugeiconsIcon
                 icon={BulbIcon}
-                className={size === "lg" ? "size-14" : "size-8 opacity-60"}
+                className={size === "lg" ? "size-36" : "size-16 opacity-60"}
                 style={{ color }}
                 strokeWidth={1.6}
               />
@@ -237,7 +238,7 @@ export function InterdependenceInfographic() {
             colorVar="--chart-3"
             renderIcon={({ size, color }) => (
               <DropletIcon
-                className={size === "lg" ? "size-14" : "size-8 opacity-60"}
+                className={size === "lg" ? "size-36" : "size-16 opacity-60"}
                 style={{ color }}
               />
             )}
@@ -292,7 +293,7 @@ function ForecastTile({
   const color = `var(${colorVar})`
   return (
     <div className="flex flex-col gap-4">
-      <p className="max-w-[260px] text-sm leading-snug">
+      <p className="mt-4 max-w-[260px] text-sm leading-snug">
         {label}{" "}
         <span
           className="cn-font-heading block text-3xl font-bold"

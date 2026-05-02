@@ -28,7 +28,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarSeparator,
+
 } from "@/components/ui/sidebar"
 
 const NAV_ITEMS = [
@@ -52,10 +52,12 @@ export function TeamSidebar({ email }: { email: string }) {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <div className="flex items-center gap-2 px-2 py-1.5">
-          <div className="flex size-7 items-center justify-center rounded-md bg-primary text-xs font-semibold text-primary-foreground">
-            Q
-          </div>
+        <div className="flex items-center gap-2 px-2 py-1.5 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
+          <img
+            src="/logo.png"
+            alt="QSTP"
+            className="size-7 shrink-0 rounded-md object-contain group-data-[collapsible=icon]:size-12"
+          />
           <div className="flex flex-col group-data-[collapsible=icon]:hidden">
             <span className="text-sm font-semibold tracking-tight">QSTP</span>
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
@@ -64,7 +66,6 @@ export function TeamSidebar({ email }: { email: string }) {
           </div>
         </div>
       </SidebarHeader>
-      <SidebarSeparator />
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Workspace</SidebarGroupLabel>
