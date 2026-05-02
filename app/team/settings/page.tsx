@@ -50,12 +50,6 @@ export default async function TeamSettingsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
-        <p className="text-sm text-muted-foreground">
-          Profile, portfolio assignment, notifications, and account security.
-        </p>
-      </div>
       <TeamSettings data={data} />
     </div>
   )

@@ -135,13 +135,6 @@ export default async function TeamPortfolioPage({
   return (
     <div className="flex flex-col gap-5">
       <div className="flex items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Portfolio</h1>
-          <p className="text-sm text-muted-foreground">
-            Every startup in QSTP, with health, stage, and last-submission at a
-            glance.
-          </p>
-        </div>
         <div className="hidden gap-3 md:flex">
           <Stat label="Total" value={String(cards.length)} />
           <Stat

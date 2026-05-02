@@ -1,10 +1,17 @@
-import { cn } from "@/lib/utils"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { Loading03Icon } from "@hugeicons/core-free-icons"
+"use client"
 
-function Spinner({ className, ...props }: React.ComponentProps<"svg">) {
+import { cn } from "@/lib/utils"
+import { LottieAnimation } from "@/components/lottie-animation"
+import loaderData from "@/public/animations/Loader.json"
+
+function Spinner({ className }: { className?: string }) {
   return (
-    <HugeiconsIcon icon={Loading03Icon} role="status" aria-label="Loading" className={cn("size-4 animate-spin", className)} {...props} strokeWidth={2} />
+    <LottieAnimation
+      animationData={loaderData}
+      loop
+      autoplay
+      className={cn("size-8", className)}
+    />
   )
 }
 
