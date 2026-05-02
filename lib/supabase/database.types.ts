@@ -119,68 +119,6 @@ export type Database = {
           },
         ]
       }
-      startup_integration_connections: {
-        Row: {
-          access_token: string | null
-          created_at: string
-          external_account_id: string | null
-          id: string
-          last_sync_error: string | null
-          last_synced_at: string | null
-          livemode: boolean
-          metadata: Json
-          provider: string
-          refresh_token: string | null
-          scopes: string[]
-          startup_id: string
-          status: string
-          token_expires_at: string | null
-          updated_at: string
-        }
-        Insert: {
-          access_token?: string | null
-          created_at?: string
-          external_account_id?: string | null
-          id?: string
-          last_sync_error?: string | null
-          last_synced_at?: string | null
-          livemode?: boolean
-          metadata?: Json
-          provider: string
-          refresh_token?: string | null
-          scopes?: string[]
-          startup_id: string
-          status?: string
-          token_expires_at?: string | null
-          updated_at?: string
-        }
-        Update: {
-          access_token?: string | null
-          created_at?: string
-          external_account_id?: string | null
-          id?: string
-          last_sync_error?: string | null
-          last_synced_at?: string | null
-          livemode?: boolean
-          metadata?: Json
-          provider?: string
-          refresh_token?: string | null
-          scopes?: string[]
-          startup_id?: string
-          status?: string
-          token_expires_at?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "startup_integration_connections_startup_id_fkey"
-            columns: ["startup_id"]
-            isOneToOne: false
-            referencedRelation: "startups"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       opportunities: {
         Row: {
           category: Database["public"]["Enums"]["opportunity_category_enum"]
@@ -224,6 +162,51 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "opportunities_startup_id_fkey"
+            columns: ["startup_id"]
+            isOneToOne: false
+            referencedRelation: "startups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      points_ledger: {
+        Row: {
+          created_at: string
+          delta: number
+          description: string
+          id: string
+          reason: Database["public"]["Enums"]["points_reason_enum"]
+          ref_redemption_id: string | null
+          startup_id: string
+        }
+        Insert: {
+          created_at?: string
+          delta: number
+          description: string
+          id?: string
+          reason: Database["public"]["Enums"]["points_reason_enum"]
+          ref_redemption_id?: string | null
+          startup_id: string
+        }
+        Update: {
+          created_at?: string
+          delta?: number
+          description?: string
+          id?: string
+          reason?: Database["public"]["Enums"]["points_reason_enum"]
+          ref_redemption_id?: string | null
+          startup_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "points_ledger_ref_redemption_fkey"
+            columns: ["ref_redemption_id"]
+            isOneToOne: false
+            referencedRelation: "reward_redemptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "points_ledger_startup_id_fkey"
             columns: ["startup_id"]
             isOneToOne: false
             referencedRelation: "startups"
@@ -458,6 +441,158 @@ export type Database = {
           },
         ]
       }
+      reward_items: {
+        Row: {
+          category: Database["public"]["Enums"]["reward_category_enum"]
+          cost: number
+          created_at: string
+          description: string | null
+          icon_key: string
+          id: string
+          image_url: string | null
+          inventory: number | null
+          is_active: boolean
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          category: Database["public"]["Enums"]["reward_category_enum"]
+          cost: number
+          created_at?: string
+          description?: string | null
+          icon_key: string
+          id?: string
+          image_url?: string | null
+          inventory?: number | null
+          is_active?: boolean
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["reward_category_enum"]
+          cost?: number
+          created_at?: string
+          description?: string | null
+          icon_key?: string
+          id?: string
+          image_url?: string | null
+          inventory?: number | null
+          is_active?: boolean
+          name?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      reward_redemptions: {
+        Row: {
+          cost_at_redemption: number
+          created_at: string
+          fulfilled_at: string | null
+          id: string
+          item_id: string
+          notes: string | null
+          startup_id: string
+          status: Database["public"]["Enums"]["redemption_status_enum"]
+        }
+        Insert: {
+          cost_at_redemption: number
+          created_at?: string
+          fulfilled_at?: string | null
+          id?: string
+          item_id: string
+          notes?: string | null
+          startup_id: string
+          status?: Database["public"]["Enums"]["redemption_status_enum"]
+        }
+        Update: {
+          cost_at_redemption?: number
+          created_at?: string
+          fulfilled_at?: string | null
+          id?: string
+          item_id?: string
+          notes?: string | null
+          startup_id?: string
+          status?: Database["public"]["Enums"]["redemption_status_enum"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reward_redemptions_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "reward_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reward_redemptions_startup_id_fkey"
+            columns: ["startup_id"]
+            isOneToOne: false
+            referencedRelation: "startups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      startup_integration_connections: {
+        Row: {
+          access_token: string | null
+          created_at: string
+          external_account_id: string | null
+          id: string
+          last_sync_error: string | null
+          last_synced_at: string | null
+          livemode: boolean
+          metadata: Json
+          provider: string
+          refresh_token: string | null
+          scopes: string[]
+          startup_id: string
+          status: string
+          token_expires_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          access_token?: string | null
+          created_at?: string
+          external_account_id?: string | null
+          id?: string
+          last_sync_error?: string | null
+          last_synced_at?: string | null
+          livemode?: boolean
+          metadata?: Json
+          provider: string
+          refresh_token?: string | null
+          scopes?: string[]
+          startup_id: string
+          status?: string
+          token_expires_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string | null
+          created_at?: string
+          external_account_id?: string | null
+          id?: string
+          last_sync_error?: string | null
+          last_synced_at?: string | null
+          livemode?: boolean
+          metadata?: Json
+          provider?: string
+          refresh_token?: string | null
+          scopes?: string[]
+          startup_id?: string
+          status?: string
+          token_expires_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "startup_integration_connections_startup_id_fkey"
+            columns: ["startup_id"]
+            isOneToOne: false
+            referencedRelation: "startups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       startups: {
         Row: {
           cohort: string | null
@@ -676,7 +811,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      redeem_reward: {
+        Args: { p_item_id: string; p_startup_id: string }
+        Returns: string
+      }
     }
     Enums: {
       distribution_type_enum:
@@ -696,6 +834,17 @@ export type Database = {
         | "talent"
         | "resource"
       opportunity_status_enum: "new" | "saved" | "applied" | "dismissed"
+      points_reason_enum:
+        | "on_time_submission"
+        | "verified_data_bonus"
+        | "streak_bonus"
+        | "community_help"
+        | "win_published"
+        | "tier_unlock"
+        | "redemption"
+        | "manual_adjust"
+      redemption_status_enum: "pending" | "fulfilled" | "cancelled"
+      reward_category_enum: "resources" | "visibility" | "network" | "tangible"
       startup_stage_enum:
         | "idea"
         | "pre_seed"
@@ -858,6 +1007,18 @@ export const Constants = {
         "resource",
       ],
       opportunity_status_enum: ["new", "saved", "applied", "dismissed"],
+      points_reason_enum: [
+        "on_time_submission",
+        "verified_data_bonus",
+        "streak_bonus",
+        "community_help",
+        "win_published",
+        "tier_unlock",
+        "redemption",
+        "manual_adjust",
+      ],
+      redemption_status_enum: ["pending", "fulfilled", "cancelled"],
+      reward_category_enum: ["resources", "visibility", "network", "tangible"],
       startup_stage_enum: [
         "idea",
         "pre_seed",
