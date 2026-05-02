@@ -31,7 +31,7 @@ export function LoginForm({ next }: { next?: string }) {
       </CardHeader>
       <CardContent>
         <form action={formAction} className="flex flex-col gap-4">
-          <input type="hidden" name="next" value={next ?? "/dashboard"} />
+          <input type="hidden" name="next" value={next ?? ""} />
           <div className="grid gap-2">
             <Label htmlFor="email">Email</Label>
             <Input

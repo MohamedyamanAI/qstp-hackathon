@@ -19,7 +19,7 @@ function getSiteUrl(forwardedHost?: string | null, forwardedProto?: string | nul
 }
 
 async function postAuthRedirect(next: string | null | undefined): Promise<never> {
-  if (next && next.length > 0) redirect(next)
+  if (next && next.length > 0 && next !== "/dashboard" && next !== "/protected") redirect(next)
   const supabase = await createClient()
   const { data } = await supabase.auth.getClaims()
   const userId =
