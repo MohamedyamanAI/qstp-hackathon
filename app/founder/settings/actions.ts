@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 
 import { requireRole } from "@/lib/auth/require"
+import { syncGoogleForStartup } from "@/lib/integrations/google"
 import { syncStripeForStartup } from "@/lib/integrations/stripe"
 import type { Json } from "@/lib/supabase/database.types"
 
@@ -107,6 +108,7 @@ export async function updateProfile(
 
 const INTEGRATION_KEYS = [
   "stripe",
+  "google_workspace",
   "github",
   "hubspot",
   "linkedin",
@@ -125,6 +127,8 @@ export async function updateIntegrations(
   for (const key of INTEGRATION_KEYS) {
     next[key] = b(formData.get(`int_${key}`))
   }
+  // Drive prefill rides on the workspace toggle (single OAuth connection).
+  next.google_drive = next.google_workspace
 
   const { error } = await supabase
     .from("startups")
@@ -132,6 +136,36 @@ export async function updateIntegrations(
     .eq("id", startup.id)
 
   if (error) return { error: error.message }
+  revalidatePath("/founder/settings")
+  return { ok: true }
+}
+
+export async function syncGoogleIntegration(): Promise<ActionState> {
+  const { supabase, userId } = await requireRole("founder")
+  const startup = await loadStartup(supabase, userId)
+  if (!startup) return { error: "No startup found." }
+
+  const now = new Date()
+  const periodStart = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)
+  )
+    .toISOString()
+    .slice(0, 10)
+  const periodEnd = now.toISOString().slice(0, 10)
+
+  try {
+    const result = await syncGoogleForStartup({
+      startupId: startup.id,
+      periodStart,
+      periodEnd,
+    })
+    if (!result.ok) return { error: result.error }
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "Google sync failed.",
+    }
+  }
+
   revalidatePath("/founder/settings")
   return { ok: true }
 }

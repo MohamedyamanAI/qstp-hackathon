@@ -19,6 +19,7 @@ import {
   type ActionState,
   addShareholder,
   removeShareholder,
+  syncGoogleIntegration,
   syncStripeIntegration,
   updateCompliance,
   updateIntegrations,
@@ -53,6 +54,14 @@ export type Shareholder = {
   name?: string
   ownership_percentage?: number
   nationality?: string | null
+}
+
+export type IntegrationStatus = {
+  status: string
+  last_synced_at: string | null
+  last_sync_error: string | null
+  external_account_id: string | null
+  has_access_token: boolean
 }
 
 export type FounderSettingsData = {
@@ -90,13 +99,8 @@ export type FounderSettingsData = {
     }
     connected_integrations: Record<string, boolean>
     integration_status?: {
-      stripe?: {
-        status: string
-        last_synced_at: string | null
-        last_sync_error: string | null
-        external_account_id: string | null
-        has_access_token: boolean
-      } | null
+      stripe?: IntegrationStatus | null
+      google_workspace?: IntegrationStatus | null
     }
     privacy_settings: {
       cohort_benchmarking?: boolean
@@ -113,6 +117,13 @@ const INTEGRATION_DEFS = [
     label: "Stripe",
     desc: "Revenue, MRR, customers — auto-pulled.",
     icon: CreditCardIcon,
+    available: true,
+  },
+  {
+    key: "google_workspace",
+    label: "Google Workspace",
+    desc: "Gmail volume + Drive activity for product updates.",
+    icon: GoogleIcon,
     available: true,
   },
   {
@@ -381,6 +392,9 @@ function IntegrationsTab({ data }: { data: FounderSettingsData }) {
   const stripe = data.startup?.integration_status?.stripe
   const stripeConnected =
     stripe?.status === "connected" && stripe.has_access_token
+  const google = data.startup?.integration_status?.google_workspace
+  const googleConnected =
+    google?.status === "connected" && google.has_access_token
 
   return (
     <div className="flex flex-col gap-4">
@@ -403,6 +417,9 @@ function IntegrationsTab({ data }: { data: FounderSettingsData }) {
           <CardContent className="grid gap-3 md:grid-cols-2">
             {INTEGRATION_DEFS.map((def) => {
               const isOn = !!connected[def.key]
+              const providerConnected =
+                (def.key === "stripe" && stripeConnected) ||
+                (def.key === "google_workspace" && googleConnected)
               return (
                 <label
                   key={def.key}
@@ -415,7 +432,7 @@ function IntegrationsTab({ data }: { data: FounderSettingsData }) {
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium">{def.label}</span>
-                      {def.key === "stripe" && stripeConnected ? (
+                      {providerConnected ? (
                         <Badge variant="outline" className="h-5 text-[10px]">
                           Connected
                         </Badge>
@@ -447,6 +464,7 @@ function IntegrationsTab({ data }: { data: FounderSettingsData }) {
       </form>
 
       <StripeConnectionPanel data={data} />
+      <GoogleConnectionPanel data={data} />
     </div>
   )
 }
@@ -504,6 +522,79 @@ function StripeConnectionPanel({ data }: { data: FounderSettingsData }) {
           <Button asChild size="sm">
             <a href="/api/integrations/stripe/connect">
               {connected ? "Reconnect Stripe" : "Connect Stripe"}
+            </a>
+          </Button>
+          {connected ? (
+            <form action={action}>
+              <Button
+                type="submit"
+                size="sm"
+                variant="outline"
+                disabled={pending}
+              >
+                {pending ? "Syncing…" : "Sync now"}
+              </Button>
+            </form>
+          ) : null}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function GoogleConnectionPanel({ data }: { data: FounderSettingsData }) {
+  const [state, action, pending] = useActionState<ActionState, FormData>(
+    syncGoogleIntegration,
+    undefined
+  )
+  const google = data.startup?.integration_status?.google_workspace
+  const connected = google?.status === "connected" && google.has_access_token
+  const enabled = data.startup?.connected_integrations.google_workspace === true
+  const lastSynced = google?.last_synced_at
+    ? new Date(google.last_synced_at).toLocaleString("en-US", {
+        dateStyle: "medium",
+        timeStyle: "short",
+      })
+    : null
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <CardTitle>Google Workspace data sync</CardTitle>
+            <CardDescription>
+              Pull Gmail volume and Drive activity into report prefill.
+            </CardDescription>
+          </div>
+          <Badge variant={connected ? "secondary" : "outline"}>
+            {connected ? "Connected" : enabled ? "Enabled" : "Not connected"}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-3">
+        {google?.external_account_id ? (
+          <p className="text-xs text-muted-foreground">
+            Account {google.external_account_id}
+            {lastSynced ? ` · last synced ${lastSynced}` : ""}
+          </p>
+        ) : enabled ? (
+          <p className="text-xs text-muted-foreground">
+            Google prefill is enabled, but no account is connected yet.
+          </p>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            Connect Google to auto-fill product update and activity fields.
+          </p>
+        )}
+        {google?.last_sync_error ? (
+          <p className="text-xs text-destructive">{google.last_sync_error}</p>
+        ) : null}
+        <StatusBanner state={state} />
+        <div className="flex flex-wrap gap-2">
+          <Button asChild size="sm">
+            <a href="/api/integrations/google/connect">
+              {connected ? "Reconnect Google" : "Connect Google"}
             </a>
           </Button>
           {connected ? (

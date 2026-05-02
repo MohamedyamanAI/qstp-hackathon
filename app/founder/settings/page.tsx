@@ -30,9 +30,12 @@ export default async function FounderSettingsPage() {
       .eq("founder_id", userId)
       .maybeSingle(),
   ])
-  const stripeStatus = startup
-    ? await loadStripeIntegrationStatus(startup.id)
-    : null
+  const [stripeStatus, googleStatus] = startup
+    ? await Promise.all([
+        loadIntegrationStatus(startup.id, "stripe"),
+        loadIntegrationStatus(startup.id, "google_workspace"),
+      ])
+    : [null, null]
 
   const data: FounderSettingsData = {
     profile: {
@@ -55,7 +58,10 @@ export default async function FounderSettingsPage() {
           extended_profile: (startup.extended_profile as ExtendedProfile) ?? {},
           connected_integrations:
             (startup.connected_integrations as Record<string, boolean>) ?? {},
-          integration_status: { stripe: stripeStatus },
+          integration_status: {
+            stripe: stripeStatus,
+            google_workspace: googleStatus,
+          },
           privacy_settings: (startup.privacy_settings as PrivacySettings) ?? {},
         }
       : null,
@@ -76,7 +82,7 @@ export default async function FounderSettingsPage() {
   )
 }
 
-async function loadStripeIntegrationStatus(startupId: string) {
+async function loadIntegrationStatus(startupId: string, provider: string) {
   try {
     const admin = createAdminClient()
     const { data } = await admin
@@ -85,7 +91,7 @@ async function loadStripeIntegrationStatus(startupId: string) {
         "status, last_synced_at, last_sync_error, external_account_id, access_token"
       )
       .eq("startup_id", startupId)
-      .eq("provider", "stripe")
+      .eq("provider", provider)
       .maybeSingle()
     if (!data) return null
     return {

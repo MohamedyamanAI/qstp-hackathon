@@ -10,6 +10,7 @@ import {
   mergePrefillIntoDraft,
   reconcileVerifiedFieldsAfterEdit,
 } from "@/lib/integrations/report-prefill"
+import { syncGoogleForStartup } from "@/lib/integrations/google"
 import { syncStripeForStartup } from "@/lib/integrations/stripe"
 import { dispatchToUsers } from "@/lib/notifications/dispatch"
 import {
@@ -166,17 +167,31 @@ async function syncConnectedIntegrationsForAssignment(
   assignment: NonNullable<Awaited<ReturnType<typeof loadAssignmentForFounder>>>
 ) {
   const integrations = asRecord(assignment.startups.connected_integrations)
-  if (integrations.stripe !== true) return
+  const periodStart = assignment.report_publications.period_start
+  const periodEnd = assignment.report_publications.period_end
+  const tasks: Promise<unknown>[] = []
 
-  try {
-    await syncStripeForStartup({
-      startupId: assignment.startup_id,
-      periodStart: assignment.report_publications.period_start,
-      periodEnd: assignment.report_publications.period_end,
-    })
-  } catch {
-    // Prefill can still use the most recent successful snapshot.
+  if (integrations.stripe === true) {
+    tasks.push(
+      syncStripeForStartup({
+        startupId: assignment.startup_id,
+        periodStart,
+        periodEnd,
+      })
+    )
   }
+  if (integrations.google_workspace === true) {
+    tasks.push(
+      syncGoogleForStartup({
+        startupId: assignment.startup_id,
+        periodStart,
+        periodEnd,
+      })
+    )
+  }
+
+  // Prefill can still use the most recent successful snapshot if any sync errors.
+  await Promise.allSettled(tasks)
 }
 
 function asRecord(value: unknown): Record<string, unknown> {

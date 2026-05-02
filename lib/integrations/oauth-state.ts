@@ -1,24 +1,28 @@
-type StripeStatePayload = {
-  provider: "stripe"
+type OAuthProvider = "stripe" | "google_workspace"
+
+type OAuthStatePayload = {
+  provider: OAuthProvider
   startupId: string
   userId: string
   nonce: string
   issuedAt: number
 }
 
-export async function createStripeOAuthState({
+export async function createOAuthState({
+  provider,
   startupId,
   userId,
   secret,
 }: {
+  provider: OAuthProvider
   startupId: string
   userId: string
   secret: string
 }) {
   if (!secret) throw new Error("Missing OAuth state secret.")
 
-  const payload: StripeStatePayload = {
-    provider: "stripe",
+  const payload: OAuthStatePayload = {
+    provider,
     startupId,
     userId,
     nonce: crypto.randomUUID(),
@@ -29,11 +33,13 @@ export async function createStripeOAuthState({
   return `${encodedPayload}.${signature}`
 }
 
-export async function verifyStripeOAuthState({
+export async function verifyOAuthState({
+  provider,
   state,
   secret,
   maxAgeMs = 10 * 60 * 1000,
 }: {
+  provider: OAuthProvider
   state: string
   secret: string
   maxAgeMs?: number
@@ -48,11 +54,27 @@ export async function verifyStripeOAuthState({
 
   const payload = JSON.parse(
     base64UrlDecode(encodedPayload)
-  ) as StripeStatePayload
-  if (payload.provider !== "stripe") return null
+  ) as OAuthStatePayload
+  if (payload.provider !== provider) return null
   if (Date.now() - payload.issuedAt > maxAgeMs) return null
 
   return payload
+}
+
+export function createStripeOAuthState(args: {
+  startupId: string
+  userId: string
+  secret: string
+}) {
+  return createOAuthState({ ...args, provider: "stripe" })
+}
+
+export function verifyStripeOAuthState(args: {
+  state: string
+  secret: string
+  maxAgeMs?: number
+}) {
+  return verifyOAuthState({ ...args, provider: "stripe" })
 }
 
 async function sign(value: string, secret: string): Promise<string> {
