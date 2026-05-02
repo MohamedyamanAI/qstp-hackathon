@@ -103,8 +103,8 @@ export function OpportunityCard({
       size={isHeadline ? "default" : "sm"}
       className={
         isHeadline
-          ? "ring-2 ring-primary/40"
-          : "transition hover:ring-foreground/30"
+          ? "!pt-0 ring-2 ring-primary/40"
+          : "!pt-0 transition hover:ring-foreground/30"
       }
     >
       <div className="relative">

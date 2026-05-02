@@ -1,5 +1,11 @@
 import {
+  BookmarkAdd02Icon,
+  CheckmarkSquare01Icon,
+  Coins01Icon,
+  ConnectIcon,
   IdeaIcon,
+  ShoppingBag01Icon,
+  StarIcon,
 } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 
@@ -132,7 +138,13 @@ export default async function FounderOpportunitiesPage({
         <aside className="flex flex-col gap-3">
           <Card size="sm">
             <CardHeader>
-              <CardTitle>Saved</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <HugeiconsIcon
+                  icon={BookmarkAdd02Icon}
+                  className="size-4 text-muted-foreground"
+                />
+                Saved
+              </CardTitle>
               <CardDescription>For later review.</CardDescription>
             </CardHeader>
             <CardContent>
@@ -161,7 +173,13 @@ export default async function FounderOpportunitiesPage({
           </Card>
           <Card size="sm">
             <CardHeader>
-              <CardTitle>Applied</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <HugeiconsIcon
+                  icon={CheckmarkSquare01Icon}
+                  className="size-4 text-muted-foreground"
+                />
+                Applied
+              </CardTitle>
               <CardDescription>In progress or submitted.</CardDescription>
             </CardHeader>
             <CardContent>
@@ -190,15 +208,21 @@ export default async function FounderOpportunitiesPage({
           </Card>
           <Card size="sm">
             <CardHeader>
-              <CardTitle>What you&apos;ve earned</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <HugeiconsIcon
+                  icon={StarIcon}
+                  className="size-4 text-muted-foreground"
+                />
+                What you&apos;ve earned
+              </CardTitle>
               <CardDescription>
                 Captured wins from this surface.
               </CardDescription>
             </CardHeader>
             <CardContent className="grid grid-cols-3 gap-2">
-              <Stat label="Grants" value="—" />
-              <Stat label="Intros" value="—" />
-              <Stat label="Deals" value="—" />
+              <Stat label="Grants" value="—" icon={Coins01Icon} />
+              <Stat label="Intros" value="—" icon={ConnectIcon} />
+              <Stat label="Deals" value="—" icon={ShoppingBag01Icon} />
             </CardContent>
           </Card>
         </aside>
@@ -207,9 +231,18 @@ export default async function FounderOpportunitiesPage({
   )
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({
+  label,
+  value,
+  icon,
+}: {
+  label: string
+  value: string
+  icon: typeof IdeaIcon
+}) {
   return (
-    <div className="text-center">
+    <div className="flex flex-col items-center gap-1 text-center">
+      <HugeiconsIcon icon={icon} className="size-4 text-muted-foreground" />
       <div className="text-base font-semibold tabular-nums">{value}</div>
       <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
         {label}
