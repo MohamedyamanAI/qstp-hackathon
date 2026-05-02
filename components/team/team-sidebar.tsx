@@ -16,6 +16,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 
 import { signOut } from "@/app/auth/actions"
+import { NotificationBell } from "@/components/notifications/notification-bell"
 import { PwaInstallButton } from "@/components/pwa-install-button"
 import {
   Sidebar,
@@ -92,6 +93,7 @@ export function TeamSidebar({ email }: { email: string }) {
           <SidebarGroupLabel>Account</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
+              <NotificationBell />
               {FOOTER_ITEMS.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton

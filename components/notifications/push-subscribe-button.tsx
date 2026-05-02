@@ -83,7 +83,9 @@ export function PushSubscribeButton() {
       })
 
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}))
+        const body = (await res.json().catch(() => ({}))) as {
+          error?: string
+        }
         throw new Error(body.error ?? "Failed to register subscription")
       }
       setStatus("subscribed")
