@@ -22,6 +22,7 @@ export type Database = {
           metrics: Json
           period_end: string
           period_start: string
+          publication_id: string | null
           startup_id: string
           status: Database["public"]["Enums"]["submission_status_enum"]
           submitted_at: string | null
@@ -36,6 +37,7 @@ export type Database = {
           metrics?: Json
           period_end: string
           period_start: string
+          publication_id?: string | null
           startup_id: string
           status?: Database["public"]["Enums"]["submission_status_enum"]
           submitted_at?: string | null
@@ -50,6 +52,7 @@ export type Database = {
           metrics?: Json
           period_end?: string
           period_start?: string
+          publication_id?: string | null
           startup_id?: string
           status?: Database["public"]["Enums"]["submission_status_enum"]
           submitted_at?: string | null
@@ -58,6 +61,13 @@ export type Database = {
           verified_fields?: Json
         }
         Relationships: [
+          {
+            foreignKeyName: "kpi_submissions_publication_id_fkey"
+            columns: ["publication_id"]
+            isOneToOne: false
+            referencedRelation: "report_publications"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "kpi_submissions_startup_id_fkey"
             columns: ["startup_id"]
@@ -194,6 +204,197 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          last_used_at: string | null
+          p256dh: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          last_used_at?: string | null
+          p256dh: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          last_used_at?: string | null
+          p256dh?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      report_assignments: {
+        Row: {
+          created_at: string
+          id: string
+          publication_id: string
+          startup_id: string
+          status: Database["public"]["Enums"]["submission_status_enum"]
+          submission_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          publication_id: string
+          startup_id: string
+          status?: Database["public"]["Enums"]["submission_status_enum"]
+          submission_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          publication_id?: string
+          startup_id?: string
+          status?: Database["public"]["Enums"]["submission_status_enum"]
+          submission_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_assignments_publication_id_fkey"
+            columns: ["publication_id"]
+            isOneToOne: false
+            referencedRelation: "report_publications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_assignments_startup_id_fkey"
+            columns: ["startup_id"]
+            isOneToOne: false
+            referencedRelation: "startups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_assignments_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "kpi_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      report_publications: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          due_date: string
+          id: string
+          period_end: string
+          period_start: string
+          published_at: string
+          questions: Json
+          template_id: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          due_date: string
+          id?: string
+          period_end: string
+          period_start: string
+          published_at?: string
+          questions: Json
+          template_id?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          due_date?: string
+          id?: string
+          period_end?: string
+          period_start?: string
+          published_at?: string
+          questions?: Json
+          template_id?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_publications_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_publications_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "report_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      report_templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_default: boolean
+          questions: Json
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_default?: boolean
+          questions?: Json
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_default?: boolean
+          questions?: Json
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_templates_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       startups: {
         Row: {
@@ -446,7 +647,7 @@ export type Database = {
         | "trailblazer"
         | "pioneer"
         | "legend"
-      submission_status_enum: "draft" | "submitted"
+      submission_status_enum: "pending" | "draft" | "in_progress" | "submitted"
       template_scope_enum: "founder" | "team" | "system"
       user_role_enum: "founder" | "team"
     }
@@ -610,7 +811,7 @@ export const Constants = {
         "pioneer",
         "legend",
       ],
-      submission_status_enum: ["draft", "submitted"],
+      submission_status_enum: ["pending", "draft", "in_progress", "submitted"],
       template_scope_enum: ["founder", "team", "system"],
       user_role_enum: ["founder", "team"],
     },
