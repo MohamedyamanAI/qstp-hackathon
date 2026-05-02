@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation"
 
 import { TeamSidebar } from "@/components/team/team-sidebar"
-import { Separator } from "@/components/ui/separator"
+
 import {
   SidebarInset,
   SidebarProvider,
@@ -30,7 +30,7 @@ export default async function TeamLayout({
       <SidebarInset>
         <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border/60 px-4">
           <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mx-1 h-4" />
+
           <span className="text-sm font-medium text-muted-foreground">
             Incubation Team
           </span>
