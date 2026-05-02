@@ -17,7 +17,7 @@ const FOUNDER_TITLES: Record<string, string> = {
   "/founder/submit": "Submit",
   "/founder/distribute": "Distribute",
   "/founder/opportunities": "Unfair Advantage Finder",
-  "/founder/metrics": "Metrics",
+  "/founder/data-room": "Data Room",
   "/founder/rewards": "Rewards",
   "/founder/settings": "Settings",
 }

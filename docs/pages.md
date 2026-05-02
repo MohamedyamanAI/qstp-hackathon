@@ -185,38 +185,81 @@ Examples:
 
 ## `/founder/data-room` — Always-Live Investor Data Room
 
-**Summary cards row** (4-5)
-- Revenue (current + MoM trend)
-- Customers / users
-- Runway
-- Headcount
+Investor-Ready Mode is not a card on this page; it is the page architecture.
+The private founder view controls what becomes visible in the shareable investor
+view.
+
+**Top — mode toggle**
+- Segmented control: Private View / Shareable View
+- Active link indicator: "Live link sharing ON · 3 active viewers this week"
+- Primary actions: [Copy Link] [Share via Email] [Share via WhatsApp]
+- Visibility settings: password protection (`investor_mode_password_hash`),
+  expiry, section-level show/hide toggles
+
+**At a Glance**
+- Company snapshot: stage, sector, geography, founding date, team size
+- Summary cards row (4-5): revenue, MRR, customers / users, runway, headcount
 - Health Score with sparkline
 
-**Trend charts**
-- Revenue / MRR over 12 months (line)
-- Headcount over time
-- Burn rate vs. runway projection
-- Customer acquisition trend
+**How We're Growing**
+- Revenue / MRR over 12 months
+- Customer / user growth
+- Team growth
+- Burn vs. runway projection
 - Engagement / DAU if applicable
+- Each chart can be hidden from the shareable view
 
-**Goal tracking**
-- Committed goals from previous submission vs actual
+**Goals & Commitments**
+- Last quarter's commitments vs actuals
+- Next quarter's stated goals
+- Hit rate over time as an investor signal
 - Visual progress bars (green/yellow/red)
-- Streak: "You've hit 3 of last 4 monthly goals"
+
+**Wins & Milestones Timeline**
+- Major events: launches, fundraises, key hires, partnerships
+- Auto-populated from KPI submissions and Challenge 3 wins
+- Visual chronological strip
+
+**Traction Proof Points**
+- Customer logos (uploaded)
+- Testimonials (optional)
+- Press mentions (auto-pulled from Challenge 3 monitoring later)
+- Awards and accelerator programs
+
+**Team**
+- Founder bios, photos, LinkedIn links
+- Current team chart with key hires
+- Advisors and mentors (optional)
+
+**Cap Table Summary** (toggleable in shareable view)
+- Total raised to date
+- Last round details: amount, date, investors named or anonymous
+- Current valuation if disclosed
+- Use of funds summary
+
+**Compliance & Legitimacy**
+- "Registered with QFC since [date]" badge
+- "QSTP Portfolio Company" badge
+- Audit status and regulatory standing
+
+**Documents** (shareable mode only, gated)
+- Pitch deck, latest version
+- Financial statements
+- Detailed cap table, if shared
+- Customer references
+- Founder approval flow before sharing requested gated documents
+
+**Analytics Footer** (private mode only)
+- Who viewed the link, when, and for how long
+- Section-level attention analytics
+- Returning viewers flagged
+- Follow-up signal: "Investor X viewed your data room 3 times this week"
 
 **Peer benchmarking** (privacy-preserved)
 - "Top 25% for revenue growth among seed-stage SaaS in QSTP"
 - Anonymized cohort percentile bars (gated by `privacy_settings.cohort_benchmarking`)
 
-**Investor-Ready Mode card**
-- Toggle: ON / OFF (writes `startups.investor_mode_enabled`)
-- Generated link, copyable, with view stats
-- "Last viewed by 2 unknown viewers, 4 hours ago"
-- Settings: password protection (`investor_mode_password_hash`), expiry,
-  what to show
-- [Share via Email] [Share via WhatsApp] [Copy Link]
-
-**Mood history**
+**Mood history** (private mode only)
 - Small chart of past mood emojis with dates
 - Optional notes timeline
 
@@ -583,7 +626,7 @@ Cards by audience (name, description, last generated date, [Generate Now]
 | Submit                             | `kpi_submissions` (write)                                              |
 | Distribute                         | `kpi_submissions.generated_outputs`, `templates`, `startups.recipients` |
 | Opportunities                      | `opportunities` (global = `startup_id IS NULL`, matched = `= startup.id`) |
-| Metrics                            | `kpi_submissions.metrics`, `startups.health_score`, `privacy_settings` |
+| Data Room                          | `kpi_submissions.metrics`, `startups.health_score`, `privacy_settings`, `startups.investor_mode_enabled` |
 | Rewards                            | `startups.points_balance`, `startups.tier` (+ TBD ledger)              |
 | Founder Settings                   | `profiles`, `startups.extended_profile`, `connected_integrations`, `privacy_settings` |
 | Team Today / Portfolio / Health    | `team_assignments` → `startups`, `kpi_submissions`, `submission_feedback` |
