@@ -44,6 +44,18 @@ type DriveFile = {
 
 type GmailMessageRef = { id: string; threadId: string }
 
+type GmailMessageMeta = {
+  id: string
+  threadId: string
+  subject: string
+  from: string
+  date: string
+  snippet: string
+}
+
+const GMAIL_METADATA_LIMIT = 40
+const DRIVE_TITLE_LIMIT = 30
+
 export function googleEnv() {
   return {
     clientId: process.env.GOOGLE_OAUTH_CLIENT_ID ?? "",
@@ -339,6 +351,14 @@ async function fetchDriveSnapshot({
     .map((file) => ({ name: file.name, mime: simplifyMime(file.mimeType) }))
   const headline = recent[0]?.name ?? null
 
+  const titlePool = [...created, ...modified].slice(0, DRIVE_TITLE_LIMIT)
+  const titles = titlePool.map((file) => ({
+    name: file.name,
+    mime: simplifyMime(file.mimeType),
+    created_at: file.createdTime,
+    modified_at: file.modifiedTime ?? file.createdTime,
+  }))
+
   return {
     files_created: created.length,
     product_updates: created.length,
@@ -346,6 +366,7 @@ async function fetchDriveSnapshot({
     files_modified: modified.length,
     biggest_win: headline,
     recent_files: recent,
+    titles,
     by_type: Object.fromEntries(docTypes),
     period_start: periodStart,
     period_end: periodEnd,
@@ -418,16 +439,73 @@ async function fetchGmailSnapshot({
   const sentThreads = new Set(sent.map((m) => m.threadId)).size
   const receivedThreads = new Set(received.map((m) => m.threadId)).size
 
+  const metadataPool = [
+    ...sent.slice(0, Math.ceil(GMAIL_METADATA_LIMIT / 2)),
+    ...received.slice(0, Math.ceil(GMAIL_METADATA_LIMIT / 2)),
+  ].slice(0, GMAIL_METADATA_LIMIT)
+  const messages = await fetchGmailMetadata({
+    accessToken,
+    refs: metadataPool,
+  })
+
   return {
     emails_sent: sent.length,
     emails_received: received.length,
     sent_threads: sentThreads,
     received_threads: receivedThreads,
     active_users: 1,
+    messages,
     period_start: periodStart,
     period_end: periodEnd,
     synced_at: new Date().toISOString(),
   }
+}
+
+async function fetchGmailMetadata({
+  accessToken,
+  refs,
+}: {
+  accessToken: string
+  refs: GmailMessageRef[]
+}): Promise<GmailMessageMeta[]> {
+  const fields = "id,threadId,snippet,payload(headers)"
+  const settled = await Promise.allSettled(
+    refs.map(async (ref) => {
+      const url = new URL(
+        `https://gmail.googleapis.com/gmail/v1/users/me/messages/${encodeURIComponent(ref.id)}`
+      )
+      url.searchParams.set("format", "metadata")
+      url.searchParams.append("metadataHeaders", "Subject")
+      url.searchParams.append("metadataHeaders", "From")
+      url.searchParams.append("metadataHeaders", "Date")
+      url.searchParams.set("fields", fields)
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
+      if (!res.ok) return null
+      const json = (await res.json()) as {
+        id?: string
+        threadId?: string
+        snippet?: string
+        payload?: { headers?: { name?: string; value?: string }[] }
+      }
+      const headers = json.payload?.headers ?? []
+      const headerValue = (name: string) =>
+        headers.find((h) => h.name?.toLowerCase() === name.toLowerCase())
+          ?.value ?? ""
+      return {
+        id: json.id ?? ref.id,
+        threadId: json.threadId ?? ref.threadId,
+        subject: headerValue("Subject"),
+        from: headerValue("From"),
+        date: headerValue("Date"),
+        snippet: typeof json.snippet === "string" ? json.snippet : "",
+      } satisfies GmailMessageMeta
+    })
+  )
+  return settled
+    .map((r) => (r.status === "fulfilled" ? r.value : null))
+    .filter((m): m is GmailMessageMeta => m !== null)
 }
 
 async function listGmailMessages({

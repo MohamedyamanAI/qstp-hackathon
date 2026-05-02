@@ -11,10 +11,9 @@ import {
 } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 
-import { openAssignment } from "@/app/founder/submit/actions"
+import { OpenAssignmentForm } from "@/components/founder/submit/open-assignment-form"
 import { SubmitStatsTabs } from "@/components/founder/submit/submit-stats-tabs"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
@@ -109,6 +108,20 @@ export default async function FounderSubmitPage() {
     )
     .eq("startup.founder_id", userId)
     .order("created_at", { ascending: false })
+
+  const { data: founderStartup } = await supabase
+    .from("startups")
+    .select("connected_integrations")
+    .eq("founder_id", userId)
+    .maybeSingle()
+  const integrations =
+    founderStartup?.connected_integrations &&
+    typeof founderStartup.connected_integrations === "object" &&
+    !Array.isArray(founderStartup.connected_integrations)
+      ? (founderStartup.connected_integrations as Record<string, unknown>)
+      : {}
+  const googleConnected = integrations.google_workspace === true
+  const stripeConnected = integrations.stripe === true
 
   const rows = assignments ?? []
   const open = rows.filter((r) => r.status !== "submitted")
@@ -223,16 +236,12 @@ export default async function FounderSubmitPage() {
                 </CardHeader>
 
                 <CardFooter className="relative z-40">
-                  <form action={openAssignment}>
-                    <input
-                      type="hidden"
-                      name="assignment_id"
-                      value={r.id}
-                    />
-                    <Button type="submit" size="sm">
-                      {r.status === "pending" ? "Open" : "Continue"}
-                    </Button>
-                  </form>
+                  <OpenAssignmentForm
+                    assignmentId={r.id}
+                    buttonLabel={r.status === "pending" ? "Open" : "Continue"}
+                    googleConnected={googleConnected}
+                    stripeConnected={stripeConnected}
+                  />
                   <div className="ml-auto flex items-center gap-2">
                     <Badge
                       variant="outline"

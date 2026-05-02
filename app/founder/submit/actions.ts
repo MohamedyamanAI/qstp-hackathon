@@ -12,6 +12,13 @@ import {
 } from "@/lib/integrations/report-prefill"
 import { syncGoogleForStartup } from "@/lib/integrations/google"
 import { syncStripeForStartup } from "@/lib/integrations/stripe"
+import {
+  extractFromGoogle,
+  type DriveTitleInput,
+  type ExtractedField,
+  type GmailMessageInput,
+} from "@/lib/intelligence/features/report-extract"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { dispatchToUsers } from "@/lib/notifications/dispatch"
 import {
   buildFilingPack,
@@ -86,24 +93,202 @@ async function applyReportPrefillToSubmission({
     startup,
     questions,
   })
-  const merged = mergePrefillIntoDraft({
-    currentAnswers: parseAnswers(submission?.metrics ?? null),
-    currentVerifiedFields: parseVerifiedFields(
-      submission?.verified_fields ?? null
-    ),
+  let answers = parseAnswers(submission?.metrics ?? null)
+  let verifiedFields = parseVerifiedFields(submission?.verified_fields ?? null)
+  let changed = false
+
+  const deterministic = mergePrefillIntoDraft({
+    currentAnswers: answers,
+    currentVerifiedFields: verifiedFields,
     prefillAnswers: prefill.answers,
     prefillVerifiedFields: prefill.verifiedFields,
   })
+  answers = deterministic.answers
+  verifiedFields = deterministic.verifiedFields
+  changed = changed || deterministic.changed
 
-  if (!merged.changed) return
+  const ai = await runAiExtractForAssignment({
+    startupId: assignment.startup_id,
+    extendedProfile: startup.extended_profile,
+    questions,
+    currentAnswers: answers,
+    periodStart: assignment.report_publications.period_start,
+    periodEnd: assignment.report_publications.period_end,
+  })
+  if (ai.length > 0) {
+    const { answers: aiAnswers, verified } = aiFieldsToPrefill(ai)
+    const aiMerge = mergePrefillIntoDraft({
+      currentAnswers: answers,
+      currentVerifiedFields: verifiedFields,
+      prefillAnswers: aiAnswers,
+      prefillVerifiedFields: verified,
+    })
+    answers = aiMerge.answers
+    verifiedFields = aiMerge.verifiedFields
+    changed = changed || aiMerge.changed
+  }
+
+  if (!changed) return
 
   await supabase
     .from("kpi_submissions")
     .update({
-      metrics: merged.answers as unknown as Json,
-      verified_fields: merged.verifiedFields as unknown as Json,
+      metrics: answers as unknown as Json,
+      verified_fields: verifiedFields as unknown as Json,
     })
     .eq("id", submissionId)
+}
+
+function aiFieldsToPrefill(fields: ExtractedField[]): {
+  answers: ReportAnswers
+  verified: ReturnType<typeof parseVerifiedFields>
+} {
+  const answers: ReportAnswers = {}
+  const verified: ReturnType<typeof parseVerifiedFields> = {}
+  const pulledAt = new Date().toISOString()
+  for (const field of fields) {
+    answers[field.fieldId] = field.value
+    verified[field.fieldId] = {
+      source: "ai_extract",
+      is_verified: true,
+      pulled_at: pulledAt,
+      label: `AI · ${field.evidence}`,
+    }
+  }
+  return { answers, verified }
+}
+
+type AiExtractCache = {
+  signature: string
+  cached_at: string
+  fields: ExtractedField[]
+}
+
+async function runAiExtractForAssignment({
+  startupId,
+  extendedProfile,
+  questions,
+  currentAnswers,
+  periodStart,
+  periodEnd,
+}: {
+  startupId: string
+  extendedProfile: Json | null | undefined
+  questions: ReturnType<typeof parseQuestions>
+  currentAnswers: ReportAnswers
+  periodStart: string
+  periodEnd: string
+}): Promise<ExtractedField[]> {
+  const blanks = questions.filter((q) => isBlank(currentAnswers[q.id]))
+  if (blanks.length === 0) return []
+
+  const extended = asRecord(extendedProfile)
+  const snapshots = asRecord(extended.integration_snapshots)
+  const workspace = asRecord(snapshots.google_workspace)
+  const drive = asRecord(snapshots.google_drive)
+
+  const messages = readGmailMessages(workspace.messages)
+  const driveTitles = readDriveTitles(drive.titles)
+  if (messages.length === 0 && driveTitles.length === 0) return []
+
+  const signature = `msgs:${messages.length}|drive:${driveTitles.length}|qs:${blanks
+    .map((q) => q.id)
+    .join(",")}`
+  const periodKey = `${periodStart}_${periodEnd}`
+
+  const cacheRoot = asRecord(extended.ai_extract)
+  const cached = cacheRoot[periodKey] as AiExtractCache | undefined
+  if (cached && cached.signature === signature) {
+    return Array.isArray(cached.fields) ? cached.fields : []
+  }
+
+  let extracted: ExtractedField[] = []
+  try {
+    const result = await extractFromGoogle({
+      questions: blanks,
+      emails: messages,
+      driveTitles,
+      periodStart,
+      periodEnd,
+    })
+    extracted = result.fields
+  } catch (error) {
+    console.warn("[report-extract] failed", error)
+    return []
+  }
+
+  await persistAiExtractCache({
+    startupId,
+    extendedProfile,
+    periodKey,
+    payload: {
+      signature,
+      cached_at: new Date().toISOString(),
+      fields: extracted,
+    },
+  })
+
+  return extracted
+}
+
+async function persistAiExtractCache({
+  startupId,
+  extendedProfile,
+  periodKey,
+  payload,
+}: {
+  startupId: string
+  extendedProfile: Json | null | undefined
+  periodKey: string
+  payload: AiExtractCache
+}) {
+  const admin = createAdminClient()
+  const extended = asRecord(extendedProfile)
+  const cacheRoot = asRecord(extended.ai_extract)
+  cacheRoot[periodKey] = payload as unknown as Json
+  extended.ai_extract = cacheRoot as unknown as Json
+  await admin
+    .from("startups")
+    .update({ extended_profile: extended as unknown as Json })
+    .eq("id", startupId)
+}
+
+function readGmailMessages(value: unknown): GmailMessageInput[] {
+  if (!Array.isArray(value)) return []
+  const out: GmailMessageInput[] = []
+  for (const raw of value) {
+    if (!raw || typeof raw !== "object") continue
+    const obj = raw as Record<string, unknown>
+    out.push({
+      subject: typeof obj.subject === "string" ? obj.subject : "",
+      from: typeof obj.from === "string" ? obj.from : "",
+      date: typeof obj.date === "string" ? obj.date : "",
+      snippet: typeof obj.snippet === "string" ? obj.snippet : "",
+    })
+  }
+  return out
+}
+
+function readDriveTitles(value: unknown): DriveTitleInput[] {
+  if (!Array.isArray(value)) return []
+  const out: DriveTitleInput[] = []
+  for (const raw of value) {
+    if (!raw || typeof raw !== "object") continue
+    const obj = raw as Record<string, unknown>
+    const name = typeof obj.name === "string" ? obj.name : ""
+    if (!name) continue
+    out.push({
+      name,
+      mime: typeof obj.mime === "string" ? obj.mime : "",
+      modified_at:
+        typeof obj.modified_at === "string" ? obj.modified_at : undefined,
+    })
+  }
+  return out
+}
+
+function isBlank(value: ReportAnswers[string] | undefined): boolean {
+  return value === null || value === undefined || value === ""
 }
 
 export async function openAssignment(formData: FormData): Promise<void> {

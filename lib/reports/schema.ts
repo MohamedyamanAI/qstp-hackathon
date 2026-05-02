@@ -29,6 +29,7 @@ export type ReportFieldSource =
   | "google_drive"
   | "google_calendar"
   | "linkedin"
+  | "ai_extract"
 
 export type VerifiedField = {
   source: ReportFieldSource
@@ -114,6 +115,7 @@ const FIELD_SOURCES: ReadonlySet<ReportFieldSource> = new Set([
   "google_drive",
   "google_calendar",
   "linkedin",
+  "ai_extract",
 ])
 
 export function parseVerifiedFields(
