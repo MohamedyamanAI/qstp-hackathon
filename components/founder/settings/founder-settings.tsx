@@ -1,16 +1,50 @@
 "use client"
 
 import {
+  AmazonIcon,
+  Analytics01Icon,
+  AnalyticsUpIcon,
+  BriefcaseConveyorBeltIcon,
+  BriefcaseDollarIcon,
+  BriefcaseIcon,
+  ChartIcon,
+  ChartLineData01Icon,
   CheckmarkCircle02Icon,
+  CloudIcon,
+  CloudServerIcon,
+  CloudUploadIcon,
   CreditCardIcon,
+  DiscordIcon,
+  DropboxIcon,
+  GitBranchIcon,
   Github01Icon,
+  GitlabIcon,
   GoogleIcon,
+  HeadsetIcon,
   Linkedin01Icon,
   Mail01Icon,
+  Mail02Icon,
+  MailOpen01Icon,
+  Megaphone01Icon,
+  MetaIcon,
+  MicrosoftIcon,
+  DollarCircleIcon,
+  MoneyExchange01Icon,
+  MoneyReceiveIcon,
+  MoneySendIcon,
+  NotionIcon,
+  PaypalIcon,
   PieChartIcon,
   PlusSignIcon,
+  SlackIcon,
   SmartPhone01Icon,
+  StripeIcon,
+  TelegramIcon,
+  UserGroupIcon,
+  UserMultipleIcon,
+  UserSquareIcon,
   WhatsappIcon,
+  ZoomIcon,
 } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { useActionState } from "react"
@@ -22,7 +56,6 @@ import {
   syncGoogleIntegration,
   syncStripeIntegration,
   updateCompliance,
-  updateIntegrations,
   updatePreferences,
   updatePrivacy,
   updateProfile,
@@ -111,50 +144,131 @@ export type FounderSettingsData = {
   } | null
 }
 
-const INTEGRATION_DEFS = [
+type ProviderKey = "stripe" | "google_workspace"
+
+type AdapterTool = {
+  name: string
+  icon: typeof CreditCardIcon
+  provider?: ProviderKey
+}
+
+type AdapterCategory = {
+  key: string
+  label: string
+  desc: string
+  icon: typeof CreditCardIcon
+  tools: AdapterTool[]
+}
+
+const ADAPTER_CATEGORIES: AdapterCategory[] = [
   {
-    key: "stripe",
-    label: "Stripe",
-    desc: "Revenue, MRR, customers — auto-pulled.",
+    key: "payments",
+    label: "Payments & billing",
+    desc: "Pull revenue, MRR, customers, payouts.",
     icon: CreditCardIcon,
-    available: true,
+    tools: [
+      { name: "Stripe", icon: StripeIcon, provider: "stripe" },
+      { name: "PayPal", icon: PaypalIcon },
+      { name: "Adyen", icon: DollarCircleIcon },
+      { name: "Square", icon: MoneyExchange01Icon },
+      { name: "Tap Payments", icon: MoneyReceiveIcon },
+      { name: "MyFatoorah", icon: MoneySendIcon },
+    ],
   },
   {
-    key: "google_workspace",
-    label: "Google Workspace",
-    desc: "Gmail volume + Drive activity for product updates.",
-    icon: GoogleIcon,
-    available: true,
+    key: "email_productivity",
+    label: "Email & productivity",
+    desc: "Inbox, docs, files, knowledge base.",
+    icon: Mail01Icon,
+    tools: [
+      { name: "Google Workspace", icon: GoogleIcon, provider: "google_workspace" },
+      { name: "Microsoft 365", icon: MicrosoftIcon },
+      { name: "Outlook", icon: Mail02Icon },
+      { name: "Mailchimp", icon: MailOpen01Icon },
+      { name: "SendGrid", icon: Mail01Icon },
+      { name: "Notion", icon: NotionIcon },
+      { name: "Dropbox", icon: DropboxIcon },
+    ],
   },
   {
-    key: "github",
-    label: "GitHub",
-    desc: "Commit activity, releases, issue velocity.",
+    key: "crm_sales",
+    label: "CRM & sales",
+    desc: "Pipeline, deals, customer accounts.",
+    icon: BriefcaseDollarIcon,
+    tools: [
+      { name: "HubSpot", icon: PieChartIcon },
+      { name: "Salesforce", icon: BriefcaseIcon },
+      { name: "Pipedrive", icon: ChartIcon },
+      { name: "Zoho CRM", icon: UserSquareIcon },
+      { name: "Intercom", icon: HeadsetIcon },
+    ],
+  },
+  {
+    key: "analytics",
+    label: "Analytics & product",
+    desc: "Active users, conversion, retention.",
+    icon: ChartLineData01Icon,
+    tools: [
+      { name: "Google Analytics", icon: GoogleIcon },
+      { name: "Mixpanel", icon: Analytics01Icon },
+      { name: "Amplitude", icon: AnalyticsUpIcon },
+      { name: "Segment", icon: ChartIcon },
+      { name: "PostHog", icon: ChartLineData01Icon },
+      { name: "Meta Pixel", icon: MetaIcon },
+    ],
+  },
+  {
+    key: "code_devops",
+    label: "Code & DevOps",
+    desc: "Commits, releases, deploys, issue velocity.",
     icon: Github01Icon,
-    available: false,
+    tools: [
+      { name: "GitHub", icon: Github01Icon },
+      { name: "GitLab", icon: GitlabIcon },
+      { name: "Bitbucket", icon: GitBranchIcon },
+      { name: "Vercel", icon: CloudUploadIcon },
+      { name: "Cloudflare", icon: CloudIcon },
+    ],
   },
   {
-    key: "hubspot",
-    label: "HubSpot",
-    desc: "Pipeline, deals, customer count.",
-    icon: PieChartIcon,
-    available: false,
+    key: "people_hr",
+    label: "People & HR",
+    desc: "Headcount, hires, departures, payroll.",
+    icon: UserGroupIcon,
+    tools: [
+      { name: "LinkedIn", icon: Linkedin01Icon },
+      { name: "BambooHR", icon: UserMultipleIcon },
+      { name: "Workday", icon: BriefcaseConveyorBeltIcon },
+      { name: "Greenhouse", icon: UserSquareIcon },
+    ],
   },
   {
-    key: "linkedin",
-    label: "LinkedIn",
-    desc: "Headcount, hires, departures.",
-    icon: Linkedin01Icon,
-    available: false,
+    key: "communication",
+    label: "Communication",
+    desc: "Team chat, customer messaging, calls.",
+    icon: Megaphone01Icon,
+    tools: [
+      { name: "Slack", icon: SlackIcon },
+      { name: "Microsoft Teams", icon: MicrosoftIcon },
+      { name: "WhatsApp", icon: WhatsappIcon },
+      { name: "Discord", icon: DiscordIcon },
+      { name: "Telegram", icon: TelegramIcon },
+      { name: "Zoom", icon: ZoomIcon },
+    ],
   },
   {
-    key: "google_analytics",
-    label: "Google Analytics",
-    desc: "Active users, conversion, sessions.",
-    icon: GoogleIcon,
-    available: false,
+    key: "cloud_infra",
+    label: "Cloud & infrastructure",
+    desc: "Compute, storage, hosting providers.",
+    icon: CloudServerIcon,
+    tools: [
+      { name: "AWS", icon: AmazonIcon },
+      { name: "Google Cloud", icon: GoogleIcon },
+      { name: "Azure", icon: MicrosoftIcon },
+      { name: "Cloudflare", icon: CloudIcon },
+    ],
   },
-] as const
+]
 
 function StatusBanner({ state }: { state: ActionState }) {
   if (!state) return null
@@ -383,12 +497,6 @@ function ProfileTab({ data }: { data: FounderSettingsData }) {
 }
 
 function IntegrationsTab({ data }: { data: FounderSettingsData }) {
-  const [state, action, pending] = useActionState<ActionState, FormData>(
-    updateIntegrations,
-    undefined
-  )
-  const connected = data.startup?.connected_integrations ?? {}
-  const enabledCount = INTEGRATION_DEFS.filter((d) => connected[d.key]).length
   const stripe = data.startup?.integration_status?.stripe
   const stripeConnected =
     stripe?.status === "connected" && stripe.has_access_token
@@ -396,222 +504,215 @@ function IntegrationsTab({ data }: { data: FounderSettingsData }) {
   const googleConnected =
     google?.status === "connected" && google.has_access_token
 
+  const [stripeSyncState, stripeSyncAction, stripeSyncPending] = useActionState<
+    ActionState,
+    FormData
+  >(syncStripeIntegration, undefined)
+  const [googleSyncState, googleSyncAction, googleSyncPending] = useActionState<
+    ActionState,
+    FormData
+  >(syncGoogleIntegration, undefined)
+
+  const liveProviders: Record<
+    ProviderKey,
+    {
+      connected: boolean
+      lastSynced: string | null
+      lastSyncError: string | null
+      externalAccountId: string | null
+      connectHref: string
+      syncAction: typeof stripeSyncAction
+      syncPending: boolean
+      syncState: ActionState
+    }
+  > = {
+    stripe: {
+      connected: stripeConnected,
+      lastSynced: stripe?.last_synced_at
+        ? new Date(stripe.last_synced_at).toLocaleString("en-US", {
+            dateStyle: "medium",
+            timeStyle: "short",
+          })
+        : null,
+      lastSyncError: stripe?.last_sync_error ?? null,
+      externalAccountId: stripe?.external_account_id ?? null,
+      connectHref: "/api/integrations/stripe/connect",
+      syncAction: stripeSyncAction,
+      syncPending: stripeSyncPending,
+      syncState: stripeSyncState,
+    },
+    google_workspace: {
+      connected: googleConnected,
+      lastSynced: google?.last_synced_at
+        ? new Date(google.last_synced_at).toLocaleString("en-US", {
+            dateStyle: "medium",
+            timeStyle: "short",
+          })
+        : null,
+      lastSyncError: google?.last_sync_error ?? null,
+      externalAccountId: google?.external_account_id ?? null,
+      connectHref: "/api/integrations/google/connect",
+      syncAction: googleSyncAction,
+      syncPending: googleSyncPending,
+      syncState: googleSyncState,
+    },
+  }
+
+  const totalTools = ADAPTER_CATEGORIES.reduce(
+    (sum, cat) => sum + cat.tools.length,
+    0
+  )
+  const connectedCount = Object.values(liveProviders).filter(
+    (p) => p.connected
+  ).length
+
   return (
-    <div className="flex flex-col gap-4">
-      <form action={action} className="flex flex-col gap-4">
-        <Card>
-          <CardHeader>
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <CardTitle>Integrations</CardTitle>
-                <CardDescription>
-                  Enable data sources for prefill. Provider connections are
-                  managed below.
-                </CardDescription>
+    <Card>
+      <CardHeader>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <CardTitle>Integrations</CardTitle>
+            <CardDescription>
+              Universal adapter framework — connect any tool in your stack.
+              Live providers sync automatically; the rest are coming soon.
+            </CardDescription>
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Badge className="border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
+              {connectedCount} connected
+            </Badge>
+            <Badge variant="secondary">{totalTools} adapters</Badge>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-5">
+        {ADAPTER_CATEGORIES.map((cat) => (
+          <div key={cat.key} className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <div className="flex size-7 items-center justify-center rounded-md bg-muted">
+                <HugeiconsIcon icon={cat.icon} className="size-4" />
               </div>
-              <Badge variant="secondary">
-                {enabledCount} of {INTEGRATION_DEFS.length} enabled
-              </Badge>
+              <div className="flex flex-col">
+                <span className="text-sm font-medium">{cat.label}</span>
+                <span className="text-[11px] text-muted-foreground">
+                  {cat.desc}
+                </span>
+              </div>
             </div>
-          </CardHeader>
-          <CardContent className="grid gap-3 md:grid-cols-2">
-            {INTEGRATION_DEFS.map((def) => {
-              const isOn = !!connected[def.key]
-              const providerConnected =
-                (def.key === "stripe" && stripeConnected) ||
-                (def.key === "google_workspace" && googleConnected)
-              return (
-                <label
-                  key={def.key}
-                  htmlFor={`int_${def.key}`}
-                  className="flex cursor-pointer items-start gap-3 rounded-lg border border-border/60 bg-card p-3 transition hover:border-foreground/30 has-disabled:cursor-not-allowed has-disabled:opacity-60"
-                >
-                  <div className="flex size-10 items-center justify-center rounded-md bg-muted">
-                    <HugeiconsIcon icon={def.icon} className="size-5" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium">{def.label}</span>
-                      {providerConnected ? (
-                        <Badge variant="outline" className="h-5 text-[10px]">
-                          Connected
-                        </Badge>
-                      ) : isOn ? (
-                        <Badge variant="outline" className="h-5 text-[10px]">
-                          Enabled
-                        </Badge>
-                      ) : null}
-                      {!def.available ? (
-                        <Badge variant="secondary" className="h-5 text-[10px]">
-                          Coming soon
-                        </Badge>
-                      ) : null}
-                    </div>
-                    <p className="text-xs text-muted-foreground">{def.desc}</p>
-                  </div>
-                  <Switch
-                    id={`int_${def.key}`}
-                    name={`int_${def.key}`}
-                    defaultChecked={isOn}
-                    disabled={!def.available}
-                  />
-                </label>
-              )
-            })}
-          </CardContent>
-        </Card>
-        <SubmitRow state={state} pending={pending} label="Save integrations" />
-      </form>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {cat.tools.map((tool) => (
+                <AdapterTile
+                  key={`${cat.key}_${tool.name}`}
+                  tool={tool}
+                  live={tool.provider ? liveProviders[tool.provider] : undefined}
+                />
+              ))}
+            </div>
+          </div>
+        ))}
+        <p className="text-[11px] text-muted-foreground">
+          Don&apos;t see your tool? Adapters can be enabled on request — reach
+          out and we&apos;ll wire it up.
+        </p>
+      </CardContent>
+    </Card>
+  )
+}
 
-      <StripeConnectionPanel data={data} />
-      <GoogleConnectionPanel data={data} />
+type LiveProviderState = {
+  connected: boolean
+  lastSynced: string | null
+  lastSyncError: string | null
+  externalAccountId: string | null
+  connectHref: string
+  syncAction: (formData: FormData) => void
+  syncPending: boolean
+  syncState: ActionState
+}
+
+function AdapterTile({
+  tool,
+  live,
+}: {
+  tool: AdapterTool
+  live?: LiveProviderState
+}) {
+  if (!live) {
+    return (
+      <div className="flex items-center gap-2 rounded-md border border-border/60 bg-card px-2.5 py-2 opacity-70">
+        <div className="flex size-7 items-center justify-center rounded-md bg-muted">
+          <HugeiconsIcon icon={tool.icon} className="size-4" />
+        </div>
+        <span className="flex-1 truncate text-xs font-medium">{tool.name}</span>
+        <Badge variant="secondary" className="h-5 text-[10px]">
+          Coming soon
+        </Badge>
+      </div>
+    )
+  }
+
+  if (live.connected) {
+    return (
+      <div className="flex flex-col gap-1.5 rounded-md border border-emerald-500/50 bg-emerald-500/5 px-2.5 py-2">
+        <div className="flex items-center gap-2">
+          <div className="flex size-7 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+            <HugeiconsIcon icon={tool.icon} className="size-4" />
+          </div>
+          <span className="flex-1 truncate text-xs font-medium">
+            {tool.name}
+          </span>
+          <Badge className="h-5 border-emerald-500/40 bg-emerald-500/10 text-[10px] text-emerald-700 dark:text-emerald-400">
+            <HugeiconsIcon
+              icon={CheckmarkCircle02Icon}
+              className="me-0.5 size-3"
+            />
+            Connected
+          </Badge>
+        </div>
+        <div className="ms-9 flex flex-col gap-1">
+          {live.externalAccountId ? (
+            <p className="truncate text-[10px] text-muted-foreground">
+              {live.externalAccountId}
+              {live.lastSynced ? ` · ${live.lastSynced}` : ""}
+            </p>
+          ) : null}
+          {live.lastSyncError ? (
+            <p className="truncate text-[10px] text-destructive">
+              {live.lastSyncError}
+            </p>
+          ) : null}
+          <div className="flex flex-wrap gap-1.5">
+            <Button asChild size="sm" variant="ghost" className="h-6 px-2 text-[11px]">
+              <a href={live.connectHref}>Reconnect</a>
+            </Button>
+            <form action={live.syncAction}>
+              <Button
+                type="submit"
+                size="sm"
+                variant="outline"
+                disabled={live.syncPending}
+                className="h-6 px-2 text-[11px]"
+              >
+                {live.syncPending ? "Syncing…" : "Sync now"}
+              </Button>
+            </form>
+          </div>
+          <StatusBanner state={live.syncState} />
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex items-center gap-2 rounded-md border border-border/60 bg-card px-2.5 py-2">
+      <div className="flex size-7 items-center justify-center rounded-md bg-muted">
+        <HugeiconsIcon icon={tool.icon} className="size-4" />
+      </div>
+      <span className="flex-1 truncate text-xs font-medium">{tool.name}</span>
+      <Button asChild size="sm" className="h-6 px-2 text-[11px]">
+        <a href={live.connectHref}>Connect</a>
+      </Button>
     </div>
-  )
-}
-
-function StripeConnectionPanel({ data }: { data: FounderSettingsData }) {
-  const [state, action, pending] = useActionState<ActionState, FormData>(
-    syncStripeIntegration,
-    undefined
-  )
-  const stripe = data.startup?.integration_status?.stripe
-  const connected = stripe?.status === "connected" && stripe.has_access_token
-  const enabled = data.startup?.connected_integrations.stripe === true
-  const lastSynced = stripe?.last_synced_at
-    ? new Date(stripe.last_synced_at).toLocaleString("en-US", {
-        dateStyle: "medium",
-        timeStyle: "short",
-      })
-    : null
-
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <CardTitle>Stripe data sync</CardTitle>
-            <CardDescription>
-              Pull revenue, MRR, and customer metrics into report prefill.
-            </CardDescription>
-          </div>
-          <Badge variant={connected ? "secondary" : "outline"}>
-            {connected ? "Connected" : enabled ? "Enabled" : "Not connected"}
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-3">
-        {stripe?.external_account_id ? (
-          <p className="text-xs text-muted-foreground">
-            Account {stripe.external_account_id}
-            {lastSynced ? ` · last synced ${lastSynced}` : ""}
-          </p>
-        ) : enabled ? (
-          <p className="text-xs text-muted-foreground">
-            Stripe prefill is enabled, but no OAuth account is connected yet.
-          </p>
-        ) : (
-          <p className="text-xs text-muted-foreground">
-            Connect Stripe to auto-fill financial fields when opening a report.
-          </p>
-        )}
-        {stripe?.last_sync_error ? (
-          <p className="text-xs text-destructive">{stripe.last_sync_error}</p>
-        ) : null}
-        <StatusBanner state={state} />
-        <div className="flex flex-wrap gap-2">
-          <Button asChild size="sm">
-            <a href="/api/integrations/stripe/connect">
-              {connected ? "Reconnect Stripe" : "Connect Stripe"}
-            </a>
-          </Button>
-          {connected ? (
-            <form action={action}>
-              <Button
-                type="submit"
-                size="sm"
-                variant="outline"
-                disabled={pending}
-              >
-                {pending ? "Syncing…" : "Sync now"}
-              </Button>
-            </form>
-          ) : null}
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-function GoogleConnectionPanel({ data }: { data: FounderSettingsData }) {
-  const [state, action, pending] = useActionState<ActionState, FormData>(
-    syncGoogleIntegration,
-    undefined
-  )
-  const google = data.startup?.integration_status?.google_workspace
-  const connected = google?.status === "connected" && google.has_access_token
-  const enabled = data.startup?.connected_integrations.google_workspace === true
-  const lastSynced = google?.last_synced_at
-    ? new Date(google.last_synced_at).toLocaleString("en-US", {
-        dateStyle: "medium",
-        timeStyle: "short",
-      })
-    : null
-
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <CardTitle>Google Workspace data sync</CardTitle>
-            <CardDescription>
-              Pull Gmail volume and Drive activity into report prefill.
-            </CardDescription>
-          </div>
-          <Badge variant={connected ? "secondary" : "outline"}>
-            {connected ? "Connected" : enabled ? "Enabled" : "Not connected"}
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-3">
-        {google?.external_account_id ? (
-          <p className="text-xs text-muted-foreground">
-            Account {google.external_account_id}
-            {lastSynced ? ` · last synced ${lastSynced}` : ""}
-          </p>
-        ) : enabled ? (
-          <p className="text-xs text-muted-foreground">
-            Google prefill is enabled, but no account is connected yet.
-          </p>
-        ) : (
-          <p className="text-xs text-muted-foreground">
-            Connect Google to auto-fill product update and activity fields.
-          </p>
-        )}
-        {google?.last_sync_error ? (
-          <p className="text-xs text-destructive">{google.last_sync_error}</p>
-        ) : null}
-        <StatusBanner state={state} />
-        <div className="flex flex-wrap gap-2">
-          <Button asChild size="sm">
-            <a href="/api/integrations/google/connect">
-              {connected ? "Reconnect Google" : "Connect Google"}
-            </a>
-          </Button>
-          {connected ? (
-            <form action={action}>
-              <Button
-                type="submit"
-                size="sm"
-                variant="outline"
-                disabled={pending}
-              >
-                {pending ? "Syncing…" : "Sync now"}
-              </Button>
-            </form>
-          ) : null}
-        </div>
-      </CardContent>
-    </Card>
   )
 }
 
