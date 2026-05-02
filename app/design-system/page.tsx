@@ -14,6 +14,83 @@ const Preview02Example = dynamic(
   () => import("@/components/blocks/preview-02"),
   { ssr: false }
 )
+const InterdependenceInfographic = dynamic(
+  () =>
+    import(
+      "@/components/blocks/dashboards/interdependence-infographic"
+    ).then((m) => m.InterdependenceInfographic),
+  { ssr: false }
+)
+const GeneralStatistics = dynamic(
+  () =>
+    import("@/components/blocks/dashboards/general-statistics").then(
+      (m) => m.GeneralStatistics
+    ),
+  { ssr: false }
+)
+const GlobeStatistics = dynamic(
+  () =>
+    import("@/components/blocks/dashboards/globe-statistics").then(
+      (m) => m.GlobeStatistics
+    ),
+  { ssr: false }
+)
+const DotGridComparison = dynamic(
+  () =>
+    import("@/components/blocks/dashboards/dot-grid-comparison").then(
+      (m) => m.DotGridComparison
+    ),
+  { ssr: false }
+)
+const SilhouetteStack = dynamic(
+  () =>
+    import("@/components/blocks/dashboards/silhouette-stack").then(
+      (m) => m.SilhouetteStack
+    ),
+  { ssr: false }
+)
+const PersonalizationDashboard = dynamic(
+  () =>
+    import("@/components/blocks/dashboards/personalization-dashboard").then(
+      (m) => m.PersonalizationDashboard
+    ),
+  { ssr: false }
+)
+const CohortFunnel = dynamic(
+  () =>
+    import("@/components/blocks/dashboards/cohort-funnel").then(
+      (m) => m.CohortFunnel
+    ),
+  { ssr: false }
+)
+const ProblemSolutionRadial = dynamic(
+  () =>
+    import("@/components/blocks/dashboards/problem-solution-radial").then(
+      (m) => m.ProblemSolutionRadial
+    ),
+  { ssr: false }
+)
+const IntegrationsCatalog = dynamic(
+  () =>
+    import("@/components/blocks/dashboards/integrations-catalog").then(
+      (m) => m.IntegrationsCatalog
+    ),
+  { ssr: false }
+)
+const PictogramComparison = dynamic(
+  () =>
+    import("@/components/blocks/dashboards/pictogram-comparison").then(
+      (m) => m.PictogramComparison
+    ),
+  { ssr: false }
+)
+const EcoCirclesGrid = dynamic(
+  () =>
+    import("@/components/blocks/dashboards/eco-circles-grid").then(
+      (m) => m.EcoCirclesGrid
+    ),
+  { ssr: false }
+)
 
 const COMPONENTS = [
   "accordion",
@@ -283,6 +360,130 @@ export default function DesignSystemPage() {
       <section className="border-t">
         <Preview02Example />
       </section>
+
+      <main className="mx-auto flex w-full max-w-6xl flex-col gap-12 px-6 pt-16 pb-20">
+        <div className="flex flex-col gap-2">
+          <h2 className="cn-font-heading text-2xl font-semibold tracking-tight">
+            Dashboards & infographics
+          </h2>
+          <p className="max-w-2xl text-sm text-muted-foreground">
+            Composed examples that pair the design system with realistic data —
+            an analytics dashboard, a globe-style overview, and an editorial
+            infographic. All three reuse the Mira tokens (olive base, lime
+            primary, chart-1…5) so they re-skin with the rest of the system.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h3 className="cn-font-heading text-lg font-medium">
+              General statistics — map view
+            </h3>
+            <Badge variant="outline">Inspired by Orion</Badge>
+          </div>
+          <GeneralStatistics />
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h3 className="cn-font-heading text-lg font-medium">
+              General statistics — globe view
+            </h3>
+            <Badge variant="outline">Glass surface</Badge>
+          </div>
+          <GlobeStatistics />
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h3 className="cn-font-heading text-lg font-medium">
+              Resource interdependence — editorial
+            </h3>
+            <Badge variant="outline">Long-form infographic</Badge>
+          </div>
+          <InterdependenceInfographic />
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h3 className="cn-font-heading text-lg font-medium">
+              Stat callout — dot-grid breakdown
+            </h3>
+            <Badge variant="outline">Editorial card</Badge>
+          </div>
+          <DotGridComparison />
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h3 className="cn-font-heading text-lg font-medium">
+              Side-by-side stats — silhouette stack
+            </h3>
+            <Badge variant="outline">Comparison</Badge>
+          </div>
+          <SilhouetteStack />
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h3 className="cn-font-heading text-lg font-medium">
+              Personalization metrics — multi-cell board
+            </h3>
+            <Badge variant="outline">Marketing dashboard</Badge>
+          </div>
+          <PersonalizationDashboard />
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h3 className="cn-font-heading text-lg font-medium">
+              Cohort funnel — Millions → 1
+            </h3>
+            <Badge variant="outline">Segmentation diagram</Badge>
+          </div>
+          <CohortFunnel />
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h3 className="cn-font-heading text-lg font-medium">
+              Problems &amp; solutions — radial flow
+            </h3>
+            <Badge variant="outline">Concept slide</Badge>
+          </div>
+          <ProblemSolutionRadial />
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h3 className="cn-font-heading text-lg font-medium">
+              Integrations catalog — landing
+            </h3>
+            <Badge variant="outline">Marketing page</Badge>
+          </div>
+          <IntegrationsCatalog />
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h3 className="cn-font-heading text-lg font-medium">
+              Pictogram comparison — 58 / 42
+            </h3>
+            <Badge variant="outline">Presentation slide</Badge>
+          </div>
+          <PictogramComparison />
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h3 className="cn-font-heading text-lg font-medium">
+              Sustainability stats — overlapping circles
+            </h3>
+            <Badge variant="outline">Editorial poster</Badge>
+          </div>
+          <EcoCirclesGrid />
+        </div>
+      </main>
     </div>
   )
 }
