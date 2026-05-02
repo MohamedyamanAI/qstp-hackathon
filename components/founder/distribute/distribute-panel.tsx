@@ -23,7 +23,15 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 
+import { GovernmentFilingSheet } from "./government-filing-modal"
 import { InvestorEmailSheet } from "./investor-email-modal"
+
+export type FilingSubmittedMap = Partial<
+  Record<
+    "pack" | "q15" | "ubo" | "moci" | "gta" | "qdb" | "invest_qatar",
+    { at: string; reference: string | null }
+  >
+>
 
 type ChannelStatus = "ready" | "sent" | "auto" | "soon"
 
@@ -42,21 +50,37 @@ export function DistributePanel({
   assignmentId,
   initialEmailLastSentAt,
   initialEmailLastSentTo,
+  initialFilingSubmitted,
+  initialFilingGeneratedAt,
 }: {
   assignmentId: string
   initialEmailLastSentAt: string | null
   initialEmailLastSentTo: string[] | null
+  initialFilingSubmitted?: FilingSubmittedMap
+  initialFilingGeneratedAt?: string | null
 }) {
   const [emailOpen, setEmailOpen] = useState(false)
+  const [filingOpen, setFilingOpen] = useState(false)
   const [emailJustSent, setEmailJustSent] = useState<{
     count: number
     at: string
   } | null>(null)
+  const [filingSubmitted, setFilingSubmitted] = useState<FilingSubmittedMap>(
+    initialFilingSubmitted ?? {}
+  )
 
   const lastSentAt = emailJustSent?.at ?? initialEmailLastSentAt
   const lastSentCount =
     emailJustSent?.count ?? initialEmailLastSentTo?.length ?? 0
   const emailEverSent = Boolean(lastSentAt)
+
+  const FILING_DOCS = ["q15", "ubo", "moci", "gta", "qdb", "invest_qatar"] as const
+  const filingDoneCount = FILING_DOCS.filter(
+    (k) => filingSubmitted[k as keyof typeof filingSubmitted]
+  ).length
+  const filingTouched =
+    filingDoneCount > 0 || Boolean(initialFilingGeneratedAt)
+  const filingAllDone = filingDoneCount === FILING_DOCS.length
 
   const channels: Channel[] = [
     {
@@ -95,12 +119,19 @@ export function DistributePanel({
     {
       id: "filing",
       title: "Government filing pack",
-      description:
-        "Pre-filled QFC, MoCI, and GTA forms ready to paste into the portals.",
+      description: filingAllDone
+        ? "All six filings logged as submitted for this period."
+        : filingTouched
+          ? `Pack drafted${filingDoneCount > 0 ? ` · ${filingDoneCount}/${FILING_DOCS.length} filed` : ""}.`
+          : "Six pre-filled filings: QFC Q15, UBO, MoCI license, GTA tax, QDB grant, Invest Qatar.",
       icon: FileVerifiedIcon,
       iconClassName: "text-amber-600",
-      status: "soon",
-      ctaLabel: "Coming soon",
+      status: filingAllDone ? "sent" : filingTouched ? "ready" : "ready",
+      ctaLabel: filingAllDone
+        ? "Open pack"
+        : filingTouched
+          ? "Resume pack"
+          : "Generate pack",
     },
     {
       id: "whatsapp",
@@ -141,7 +172,13 @@ export function DistributePanel({
           <ChannelCard
             key={c.id}
             channel={c}
-            onAction={c.id === "email" ? () => setEmailOpen(true) : undefined}
+            onAction={
+              c.id === "email"
+                ? () => setEmailOpen(true)
+                : c.id === "filing"
+                  ? () => setFilingOpen(true)
+                  : undefined
+            }
           />
         ))}
       </div>
@@ -153,6 +190,14 @@ export function DistributePanel({
         onSent={(count) =>
           setEmailJustSent({ count, at: new Date().toISOString() })
         }
+      />
+
+      <GovernmentFilingSheet
+        assignmentId={assignmentId}
+        open={filingOpen}
+        onOpenChange={setFilingOpen}
+        initialSubmitted={filingSubmitted}
+        onSubmittedChange={setFilingSubmitted}
       />
     </>
   )

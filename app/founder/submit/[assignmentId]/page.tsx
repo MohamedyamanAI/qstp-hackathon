@@ -253,9 +253,28 @@ function AnswersReadout({
   )
 }
 
+type FilingDocKey =
+  | "pack"
+  | "q15"
+  | "ubo"
+  | "moci"
+  | "gta"
+  | "qdb"
+  | "invest_qatar"
+
+const FILING_DOC_KEYS: readonly FilingDocKey[] = [
+  "pack",
+  "q15",
+  "ubo",
+  "moci",
+  "gta",
+  "qdb",
+  "invest_qatar",
+]
+
 function readFilingMeta(outputs: unknown): {
   submitted: Partial<
-    Record<"pack" | "q15" | "ubo", { at: string; reference: string | null }>
+    Record<FilingDocKey, { at: string; reference: string | null }>
   >
   generatedAt: string | null
 } {
@@ -271,10 +290,14 @@ function readFilingMeta(outputs: unknown): {
     typeof obj.generatedAt === "string" ? obj.generatedAt : null
   const submittedRaw = obj.submitted
   const out: Partial<
-    Record<"pack" | "q15" | "ubo", { at: string; reference: string | null }>
+    Record<FilingDocKey, { at: string; reference: string | null }>
   > = {}
-  if (submittedRaw && typeof submittedRaw === "object" && !Array.isArray(submittedRaw)) {
-    for (const key of ["pack", "q15", "ubo"] as const) {
+  if (
+    submittedRaw &&
+    typeof submittedRaw === "object" &&
+    !Array.isArray(submittedRaw)
+  ) {
+    for (const key of FILING_DOC_KEYS) {
       const v = (submittedRaw as Record<string, unknown>)[key]
       if (v && typeof v === "object" && !Array.isArray(v)) {
         const r = v as Record<string, unknown>

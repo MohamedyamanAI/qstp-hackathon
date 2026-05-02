@@ -1,8 +1,14 @@
 "use client"
 
-import { Mail01Icon, SentIcon } from "@hugeicons/core-free-icons"
+import {
+  Cancel01Icon,
+  Mail01Icon,
+  MaximizeScreenIcon,
+  SentIcon,
+} from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { useEffect, useState, useTransition } from "react"
+import { createPortal } from "react-dom"
 
 import {
   generateInvestorEmail,
@@ -43,7 +49,17 @@ export function InvestorEmailSheet({
   const [bodyText, setBodyText] = useState("")
   const [recipientsRaw, setRecipientsRaw] = useState("")
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
+  const [pdfFullscreen, setPdfFullscreen] = useState(false)
   const [, startTransition] = useTransition()
+
+  useEffect(() => {
+    if (!pdfFullscreen) return
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setPdfFullscreen(false)
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [pdfFullscreen])
 
   useEffect(() => {
     if (!open) return
@@ -86,6 +102,7 @@ export function InvestorEmailSheet({
       setBodyText("")
       setRecipientsRaw("")
       setPdfUrl(null)
+      setPdfFullscreen(false)
       setError(null)
       setPhase("generating")
     }
@@ -126,7 +143,12 @@ export function InvestorEmailSheet({
   const sent = phase === "sent"
 
   return (
-    <Sheet open={open} onOpenChange={handleSheetOpenChange}>
+    <>
+    <Sheet
+      modal={!pdfFullscreen}
+      open={open}
+      onOpenChange={handleSheetOpenChange}
+    >
       <SheetContent
         side="right"
         className="flex flex-col gap-0 p-0 sm:max-w-[66vw]! data-[side=right]:w-[66vw]"
@@ -226,10 +248,27 @@ export function InvestorEmailSheet({
               </div>
 
               <div className="flex flex-col gap-3">
-                <h3 className="text-sm font-medium text-muted-foreground">
-                  PDF attachment
-                </h3>
-                <div className="flex h-[68vh] flex-col items-stretch overflow-hidden rounded-lg border border-border/60 bg-muted/30">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-medium text-muted-foreground">
+                    PDF attachment
+                  </h3>
+                  {pdfUrl ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 gap-1.5 px-2 text-xs"
+                      onClick={() => setPdfFullscreen(true)}
+                    >
+                      <HugeiconsIcon
+                        icon={MaximizeScreenIcon}
+                        className="h-3.5 w-3.5"
+                      />
+                      Fullscreen
+                    </Button>
+                  ) : null}
+                </div>
+                <div className="relative flex h-[68vh] flex-col items-stretch overflow-hidden rounded-lg border border-border/60 bg-muted/30">
                   {pdfUrl ? (
                     <iframe
                       src={pdfUrl}
@@ -292,6 +331,41 @@ export function InvestorEmailSheet({
         </SheetFooter>
       </SheetContent>
     </Sheet>
+    {pdfFullscreen && pdfUrl && typeof document !== "undefined"
+      ? createPortal(
+          <div
+            className="fixed inset-0 z-[200] flex flex-col bg-background"
+            style={{ pointerEvents: "auto" }}
+          >
+            <div className="flex items-center justify-between gap-3 border-b border-border/60 px-4 py-2">
+              <div className="flex items-center gap-2 text-sm">
+                <HugeiconsIcon icon={Mail01Icon} className="h-4 w-4" />
+                <span className="font-medium">
+                  {draft?.meta.startupName ?? "Investor"} update
+                </span>
+                <span className="text-muted-foreground">· PDF preview</span>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8 gap-1.5"
+                onClick={() => setPdfFullscreen(false)}
+              >
+                <HugeiconsIcon icon={Cancel01Icon} className="h-4 w-4" />
+                Close
+              </Button>
+            </div>
+            <iframe
+              src={pdfUrl}
+              title="Investor update PDF (fullscreen)"
+              className="h-full w-full flex-1"
+            />
+          </div>,
+          document.body
+        )
+      : null}
+    </>
   )
 }
 
