@@ -17,6 +17,9 @@
   "images": {
     "binding": "IMAGES"
   },
+  "browser": {
+    "binding": "BROWSER"
+  },
   "observability": {
     "enabled": true
   }
