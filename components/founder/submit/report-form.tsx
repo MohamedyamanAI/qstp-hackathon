@@ -96,7 +96,7 @@ export function ReportForm({
   const groups = groupQuestions(questions)
 
   return (
-    <form className="flex flex-col gap-6">
+    <form className="flex flex-col gap-6 pb-32 md:pb-0">
       <input type="hidden" name="assignment_id" value={assignmentId} />
 
       {groups.map((g) => (
@@ -133,30 +133,34 @@ export function ReportForm({
         <p className="text-sm text-muted-foreground">Draft saved.</p>
       ) : null}
 
-      <div className="flex items-center justify-between gap-3 border-t border-border/60 pt-4">
-        <Button asChild variant="ghost">
-          <Link href="/founder/submit">Back</Link>
-        </Button>
-        <div className="flex gap-2">
-          <Button
-            type="submit"
-            variant="outline"
-            disabled={draftPending || alreadySubmitted}
-            formAction={draftAction}
-          >
-            {draftPending ? "Saving…" : "Save draft"}
+      <div className="fixed inset-x-0 bottom-0 z-50 border-t border-border/60 bg-background/95 px-4 py-3 backdrop-blur md:static md:inset-auto md:z-auto md:border-t md:bg-transparent md:px-0 md:pt-4 md:backdrop-blur-none">
+        <div className="flex items-center justify-between gap-3">
+          <Button asChild variant="ghost" className="hidden md:inline-flex">
+            <Link href="/founder/submit">Back</Link>
           </Button>
-          <Button
-            type="submit"
-            disabled={submitPending || alreadySubmitted}
-            formAction={submitActionFn}
-          >
-            {submitPending
-              ? "Submitting…"
-              : alreadySubmitted
-                ? "Submitted"
-                : "Submit"}
-          </Button>
+          <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row">
+            <Button
+              type="submit"
+              disabled={submitPending || alreadySubmitted}
+              formAction={submitActionFn}
+              className="h-12 w-full md:h-auto md:w-auto"
+            >
+              {submitPending
+                ? "Submitting…"
+                : alreadySubmitted
+                  ? "Submitted"
+                  : "Submit"}
+            </Button>
+            <Button
+              type="submit"
+              variant="outline"
+              disabled={draftPending || alreadySubmitted}
+              formAction={draftAction}
+              className="h-12 w-full md:h-auto md:w-auto"
+            >
+              {draftPending ? "Saving…" : "Save draft"}
+            </Button>
+          </div>
         </div>
       </div>
     </form>
