@@ -358,7 +358,10 @@ export default async function TeamSubmissionsPage({
                     : "low"
 
               return (
-                <Card key={submission.id} className="overflow-hidden">
+                <Card
+                  key={submission.id}
+                  className="animate-in fade-in-0 slide-in-from-top-2 overflow-hidden duration-500"
+                >
                   <details className="group/submission">
                     <summary className="cursor-pointer list-none px-4 py-4 marker:hidden">
                       <div className="flex flex-col gap-3 md:flex-row md:items-start">
