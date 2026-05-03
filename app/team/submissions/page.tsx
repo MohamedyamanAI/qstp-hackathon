@@ -40,6 +40,7 @@ import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
+import { RealtimeSubmissionsRefresher } from "@/components/team/realtime-submissions-refresher"
 import { requireRole } from "@/lib/auth/require"
 import type { Database, Json } from "@/lib/supabase/database.types"
 
@@ -269,6 +270,7 @@ export default async function TeamSubmissionsPage({
 
   return (
     <div className="flex flex-col gap-5">
+      <RealtimeSubmissionsRefresher />
       <div className="grid gap-3 md:grid-cols-4">
         <StatCard
           icon={InboxIcon}

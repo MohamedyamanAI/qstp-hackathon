@@ -43,6 +43,7 @@ import {
 } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
+import { RealtimeSubmissionsRefresher } from "@/components/team/realtime-submissions-refresher"
 import { requireRole } from "@/lib/auth/require"
 import type { Json } from "@/lib/supabase/database.types"
 
@@ -462,6 +463,7 @@ export default async function TeamTodayPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      <RealtimeSubmissionsRefresher />
       {/* Hero banner */}
       <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-primary/15 via-background to-background">
         <div className="absolute inset-0 opacity-[0.06] [background-image:radial-gradient(circle_at_1px_1px,var(--foreground)_1px,transparent_0)] [background-size:18px_18px]" />
