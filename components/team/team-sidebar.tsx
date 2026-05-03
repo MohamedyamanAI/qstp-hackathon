@@ -3,7 +3,7 @@
 import {
   Analytics02Icon,
   Building01Icon,
-  Calendar01Icon,
+  // Calendar01Icon,
   InboxIcon,
   Logout03Icon,
   Note01Icon,
@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/sidebar"
 
 const NAV_ITEMS = [
-  { href: "/team/today", label: "Today", icon: Calendar01Icon },
+  // { href: "/team/today", label: "Today", icon: Calendar01Icon },
   { href: "/team/portfolio", label: "Portfolio", icon: Building01Icon },
   { href: "/team/submissions", label: "Submissions", icon: InboxIcon },
   { href: "/team/insights", label: "Insights", icon: Analytics02Icon },
