@@ -6,9 +6,9 @@ import { renderInvestorEmailHtml, type InvestorEmailData } from "./template"
  * On Cloudflare Workers (production / `wrangler dev --remote`) we use the
  * Browser Rendering binding via `@cloudflare/puppeteer`.
  *
- * On Node (`pnpm dev`, no binding present) we fall back to local Puppeteer.
- * The dynamic import keeps `puppeteer` (heavy, devDependency) out of the
- * Worker bundle.
+ * The Worker bundle must not import the Node `puppeteer` package. OpenNext
+ * traces dynamic imports during bundling, and Puppeteer's optional BiDi files
+ * are not copied into the generated Worker package.
  */
 export async function renderInvestorPdf(data: InvestorEmailData): Promise<Uint8Array> {
   const html = renderInvestorEmailHtml(data)
@@ -32,24 +32,7 @@ export async function renderInvestorPdf(data: InvestorEmailData): Promise<Uint8A
     }
   }
 
-  // Local dev fallback — uses node Puppeteer
-  const { default: nodePuppeteer } = await import("puppeteer")
-  const browser = await nodePuppeteer.launch({
-    headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
-  })
-  try {
-    const page = await browser.newPage()
-    await page.setContent(html, { waitUntil: "networkidle0" })
-    const pdf = await page.pdf({
-      format: "A4",
-      printBackground: true,
-      margin: { top: "0", bottom: "0", left: "0", right: "0" },
-    })
-    return new Uint8Array(pdf)
-  } finally {
-    await browser.close()
-  }
+  throw new Error("Cloudflare Browser Rendering binding is not configured.")
 }
 
 async function getBrowserBinding(): Promise<unknown> {
