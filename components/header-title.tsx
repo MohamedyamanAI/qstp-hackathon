@@ -12,7 +12,6 @@ const TEAM_TITLES: Record<string, string> = {
 }
 
 const FOUNDER_TITLES: Record<string, string> = {
-  "/founder/home": "Home",
   "/founder/submit": "Submit",
   "/founder/opportunities": "Unfair Advantage Finder",
   "/founder/data-room": "Data Room",

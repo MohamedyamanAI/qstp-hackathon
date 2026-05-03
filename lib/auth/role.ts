@@ -4,7 +4,7 @@ import type { Database } from "@/lib/supabase/database.types"
 
 export type UserRole = Database["public"]["Enums"]["user_role_enum"]
 
-export const FOUNDER_HOME = "/founder/home"
+export const FOUNDER_HOME = "/founder/data-room"
 export const TEAM_HOME = "/team/today"
 
 export function roleHomeFor(role: UserRole | null | undefined): string {

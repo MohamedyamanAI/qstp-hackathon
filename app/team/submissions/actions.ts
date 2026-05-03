@@ -211,7 +211,7 @@ export async function sendFounderNote(formData: FormData) {
       type: "team_feedback",
       title: "New team note",
       message: note,
-      action_url: "/founder/home",
+      action_url: "/founder/data-room",
       data: {
         submission_id: submissionId,
         startup_id: submission.startup_id,

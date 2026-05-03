@@ -38,6 +38,6 @@ export async function redeemReward(itemId: string): Promise<RedeemResult> {
   }
 
   revalidatePath("/founder/rewards")
-  revalidatePath("/founder/home")
+  revalidatePath("/founder/data-room")
   return { ok: true, redemptionId: data as string }
 }

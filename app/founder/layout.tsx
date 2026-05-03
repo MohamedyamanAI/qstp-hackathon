@@ -8,6 +8,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
+import { FOUNDER_HOME } from "@/lib/auth/role"
 import { createClient } from "@/lib/supabase/server"
 
 export default async function FounderLayout({
@@ -20,7 +21,7 @@ export default async function FounderLayout({
   const claims = data?.claims
 
   if (!claims) {
-    redirect("/auth/login?next=/founder/home")
+    redirect(`/auth/login?next=${FOUNDER_HOME}`)
   }
 
   const email = String(claims.email ?? claims.sub ?? "Founder")

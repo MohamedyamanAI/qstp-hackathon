@@ -26,7 +26,7 @@ There is no test runner configured. Database types live in `lib/supabase/databas
 
 The app has two authenticated areas, gated by `profiles.role` (`'founder' | 'team'`):
 
-- `app/founder/*` → home `/founder/home`
+- `app/founder/*` → home `/founder/data-room`
 - `app/team/*` → home `/team/today`
 
 Role plumbing lives in `lib/auth/role.ts` (`fetchUserRole`, `roleHomeFor`, `FOUNDER_HOME`, `TEAM_HOME`). Three places enforce the split and must stay in sync:

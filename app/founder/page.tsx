@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation"
 
+import { FOUNDER_HOME } from "@/lib/auth/role"
+
 export default function FounderIndexPage() {
-  redirect("/founder/home")
+  redirect(FOUNDER_HOME)
 }
