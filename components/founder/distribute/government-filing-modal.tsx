@@ -22,13 +22,13 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet"
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 type Phase = "generating" | "ready" | "error"
@@ -227,17 +227,14 @@ export function GovernmentFilingSheet({
 
   return (
     <>
-      <Sheet
+      <Drawer
         modal={!fullscreen}
         open={open}
         onOpenChange={handleSheetOpenChange}
       >
-        <SheetContent
-          side="right"
-          className="flex flex-col gap-0 p-0 sm:max-w-[72vw]! data-[side=right]:w-[72vw]"
-        >
-          <SheetHeader className="border-b border-border/60 px-6 py-4">
-            <SheetTitle className="flex items-center gap-2">
+        <DrawerContent className="mx-auto h-[100dvh] max-h-[100dvh] w-full md:h-[90vh] md:max-h-[90vh] md:max-w-5xl">
+          <DrawerHeader className="border-b border-border/60 px-6 py-4">
+            <DrawerTitle className="flex items-center gap-2">
               <HugeiconsIcon icon={FileVerifiedIcon} className="h-5 w-5" />
               Government filing pack
               {phase === "generating" ? (
@@ -247,14 +244,14 @@ export function GovernmentFilingSheet({
                   {data.meta.qfcRegistrationNumber} · {data.meta.periodLabel || "Annual"}
                 </Badge>
               ) : null}
-            </SheetTitle>
-            <SheetDescription>
+            </DrawerTitle>
+            <DrawerDescription>
               Six pre-filled filings — QFC Form Q15, UBO Report, MoCI license
               renewal, GTA tax return, QDB grant report, and Invest Qatar
               incentives. Drafted from your latest submission, settings, and
               cap table.
-            </SheetDescription>
-          </SheetHeader>
+            </DrawerDescription>
+          </DrawerHeader>
 
           <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
             {phase === "generating" && !data ? (
@@ -371,7 +368,7 @@ export function GovernmentFilingSheet({
                         type="button"
                         variant="ghost"
                         size="sm"
-                        className="h-7 gap-1.5 px-2 text-xs"
+                        className="hidden h-7 gap-1.5 px-2 text-xs md:inline-flex"
                         onClick={() => setFullscreen(true)}
                       >
                         <HugeiconsIcon
@@ -424,7 +421,7 @@ export function GovernmentFilingSheet({
             ) : null}
           </div>
 
-          <SheetFooter className="border-t border-border/60 px-6 py-3">
+          <DrawerFooter className="border-t border-border/60 px-6 py-3">
             <div className="flex w-full items-center justify-between gap-3">
               <span className="text-xs text-muted-foreground">
                 {data
@@ -439,9 +436,9 @@ export function GovernmentFilingSheet({
                 Close
               </Button>
             </div>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
       {fullscreen && activeUrl && typeof document !== "undefined"
         ? createPortal(
             <div
