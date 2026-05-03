@@ -130,3 +130,18 @@
     @apply font-sans;
     }
 }
+
+@keyframes qstp-pin-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.18;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 0.05;
+  }
+}
+
+.qstp-pin-pulse {
+  animation: qstp-pin-pulse 2.4s ease-in-out infinite;
+}
