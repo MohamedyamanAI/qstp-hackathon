@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server"
 import { fetchUserRole, roleHomeFor } from "@/lib/auth/role"
 import type { Database } from "@/lib/supabase/database.types"
 
-const PUBLIC_PATHS = ["/", "/auth", "/api"]
+const PUBLIC_PATHS = ["/", "/auth", "/api", "/share"]
 
 const FOUNDER_PREFIX = "/founder"
 const TEAM_PREFIX = "/team"

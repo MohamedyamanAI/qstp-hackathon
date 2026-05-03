@@ -1,6 +1,13 @@
 "use client"
 
 import * as React from "react"
+import { toast } from "sonner"
+
+import {
+  setShareEnabled,
+  regenerateShareToken,
+  type ShareState,
+} from "./actions"
 import {
   Area,
   AreaChart,
@@ -370,19 +377,93 @@ const HEADCOUNT_CHART_CONFIG: ChartConfig = {
   ops: { label: "Operations", color: "var(--chart-4)" },
 }
 
-export function DataRoomView({ reports }: { reports: RecentReport[] }) {
-  const [shareable, setShareable] = React.useState(false)
+export function DataRoomView({
+  reports,
+  initialShare,
+  mode = "founder",
+}: {
+  reports: RecentReport[]
+  initialShare?: ShareState
+  mode?: "founder" | "public"
+}) {
+  const isPublic = mode === "public"
+  const [share, setShare] = React.useState<ShareState>(
+    initialShare ?? {
+      enabled: false,
+      token: null,
+      showCapTable: true,
+      showDocuments: true,
+    }
+  )
+  const [pending, startTransition] = React.useTransition()
+
+  const shareable = isPublic ? true : share.enabled
+  const shareUrl = React.useMemo(() => buildShareUrl(share.token), [share.token])
+
+  const onToggle = (next: boolean) => {
+    setShare((prev) => ({ ...prev, enabled: next }))
+    startTransition(async () => {
+      try {
+        const result = await setShareEnabled(next)
+        setShare(result)
+        toast.success(next ? "Share link enabled" : "Share link disabled")
+      } catch (err) {
+        setShare((prev) => ({ ...prev, enabled: !next }))
+        toast.error(
+          err instanceof Error ? err.message : "Could not update share link"
+        )
+      }
+    })
+  }
+
+  const ensureLink = async (): Promise<string | null> => {
+    if (share.token && share.enabled) return shareUrl
+    return new Promise((resolve) => {
+      startTransition(async () => {
+        try {
+          const result = share.token
+            ? await setShareEnabled(true)
+            : await regenerateShareToken()
+          setShare(result)
+          resolve(buildShareUrl(result.token))
+        } catch (err) {
+          toast.error(
+            err instanceof Error ? err.message : "Could not create share link"
+          )
+          resolve(null)
+        }
+      })
+    })
+  }
 
   return (
     <div className="flex flex-col gap-8">
-      <Header shareable={shareable} onToggle={() => {}} />
+      <Header
+        isPublic={isPublic}
+        shareUrl={shareUrl}
+        ensureLink={ensureLink}
+        pending={pending}
+      />
       <div className="grid grid-cols-[1fr_320px] items-start gap-6">
         <Trends />
         <div className="flex flex-col gap-3">
-          <PrivateShareToggle shareable={shareable} onToggle={setShareable} />
-          {shareable ? <LiveLinkBannerCompact /> : <PrivateModeBannerCompact />}
+          {!isPublic ? (
+            <PrivateShareToggle
+              shareable={shareable}
+              onToggle={onToggle}
+              pending={pending}
+            />
+          ) : null}
+          {shareable ? (
+            <LiveLinkBannerCompact
+              shareUrl={shareUrl}
+              isPublic={isPublic}
+              ensureLink={ensureLink}
+            />
+          ) : (
+            <PrivateModeBannerCompact />
+          )}
           <ReportingStreakCard reports={reports} />
-          {/* {!shareable ? <ThisWeekCard /> : null} */}
         </div>
       </div>
       <AtAGlance />
@@ -400,10 +481,76 @@ export function DataRoomView({ reports }: { reports: RecentReport[] }) {
   )
 }
 
-function Header({}: {
-  shareable: boolean
-  onToggle: (v: boolean) => void
+function buildShareUrl(token: string | null): string | null {
+  if (!token) return null
+  if (typeof window === "undefined") return `/share/${token}`
+  return `${window.location.origin}/share/${token}`
+}
+
+function Header({
+  isPublic,
+  shareUrl,
+  ensureLink,
+  pending,
+}: {
+  isPublic: boolean
+  shareUrl: string | null
+  ensureLink: () => Promise<string | null>
+  pending: boolean
 }) {
+  const handleCopy = async () => {
+    const url = shareUrl ?? (await ensureLink())
+    if (!url) return
+    try {
+      await navigator.clipboard.writeText(url)
+      toast.success("Link copied to clipboard")
+    } catch {
+      toast.error("Couldn't copy — please copy manually")
+    }
+  }
+
+  const handleEmail = async () => {
+    const url = shareUrl ?? (await ensureLink())
+    if (!url) return
+    const subject = encodeURIComponent(`${COMPANY.name} — investor data room`)
+    const body = encodeURIComponent(
+      `Hi,\n\nHere's a live, read-only view of our data room:\n${url}\n\nLet me know if you'd like to talk through anything.`
+    )
+    window.location.href = `mailto:?subject=${subject}&body=${body}`
+  }
+
+  const handleWhatsApp = async () => {
+    const url = shareUrl ?? (await ensureLink())
+    if (!url) return
+    const text = encodeURIComponent(
+      `${COMPANY.name} — investor data room: ${url}`
+    )
+    window.open(`https://wa.me/?text=${text}`, "_blank", "noopener,noreferrer")
+  }
+
+  const handleShare = async () => {
+    const url = shareUrl ?? (await ensureLink())
+    if (!url) return
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({
+          title: `${COMPANY.name} — data room`,
+          text: `${COMPANY.name} investor data room`,
+          url,
+        })
+        return
+      } catch {
+        // user cancelled or unsupported — fall through to copy
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url)
+      toast.success("Link copied to clipboard")
+    } catch {
+      toast.error("Couldn't share — please copy manually")
+    }
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-end justify-between gap-3">
@@ -412,30 +559,55 @@ function Header({}: {
             How we&apos;re growing
           </h2>
           <p className="text-sm text-muted-foreground">
-            Twelve months of momentum — toggle each chart to hide it from the
-            shareable view.
+            {isPublic
+              ? "A live, read-only view of how this company is growing."
+              : "Twelve months of momentum — toggle each chart to hide it from the shareable view."}
           </p>
         </div>
-        <div className="flex shrink-0 flex-wrap items-center gap-2">
-          <Button variant="outline" size="sm" className="gap-2">
-            <HugeiconsIcon icon={Copy01Icon} className="size-4" />
-            Copy link
-          </Button>
-          <Button variant="outline" size="sm" className="gap-2">
-            <HugeiconsIcon icon={Mail01Icon} className="size-4" />
-            Email
-          </Button>
-          <Button variant="outline" size="sm" className="gap-2">
-            <HugeiconsIcon icon={WhatsappIcon} className="size-4" />
-            WhatsApp
-          </Button>
-          <Button size="sm" className="gap-2">
-            <HugeiconsIcon icon={Share05Icon} className="size-4" />
-            Share
-          </Button>
-        </div>
+        {!isPublic ? (
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={handleCopy}
+              disabled={pending}
+            >
+              <HugeiconsIcon icon={Copy01Icon} className="size-4" />
+              Copy link
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={handleEmail}
+              disabled={pending}
+            >
+              <HugeiconsIcon icon={Mail01Icon} className="size-4" />
+              Email
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={handleWhatsApp}
+              disabled={pending}
+            >
+              <HugeiconsIcon icon={WhatsappIcon} className="size-4" />
+              WhatsApp
+            </Button>
+            <Button
+              size="sm"
+              className="gap-2"
+              onClick={handleShare}
+              disabled={pending}
+            >
+              <HugeiconsIcon icon={Share05Icon} className="size-4" />
+              Share
+            </Button>
+          </div>
+        ) : null}
       </div>
-
     </div>
   )
 }
@@ -444,9 +616,11 @@ function Header({}: {
 function PrivateShareToggle({
   shareable,
   onToggle,
+  pending,
 }: {
   shareable: boolean
   onToggle: (v: boolean) => void
+  pending: boolean
 }) {
   return (
     <Card className="border-dashed">
@@ -480,7 +654,11 @@ function PrivateShareToggle({
         </div>
         <div className="flex items-center justify-center gap-3">
           <span className="text-xs text-muted-foreground">Private</span>
-          <Switch checked={shareable} onCheckedChange={onToggle} />
+          <Switch
+            checked={shareable}
+            onCheckedChange={onToggle}
+            disabled={pending}
+          />
           <span className="text-xs text-muted-foreground">Shareable</span>
         </div>
       </CardContent>
@@ -517,31 +695,74 @@ function PrivateModeBannerCompact() {
   )
 }
 
-function LiveLinkBannerCompact() {
+function LiveLinkBannerCompact({
+  shareUrl,
+  isPublic,
+  ensureLink,
+}: {
+  shareUrl: string | null
+  isPublic: boolean
+  ensureLink: () => Promise<string | null>
+}) {
+  const handleCopy = async () => {
+    const url = shareUrl ?? (await ensureLink())
+    if (!url) return
+    try {
+      await navigator.clipboard.writeText(url)
+      toast.success("Link copied")
+    } catch {
+      toast.error("Couldn't copy — please copy manually")
+    }
+  }
+
+  const handleOpen = async () => {
+    const url = shareUrl ?? (await ensureLink())
+    if (!url) return
+    window.open(url, "_blank", "noopener,noreferrer")
+  }
+
   return (
-    <Card size="sm" className="overflow-hidden border-primary/30 bg-primary/[0.04]">
+    <Card
+      size="sm"
+      className="overflow-hidden border-primary/30 bg-primary/[0.04]"
+    >
       <CardContent className="flex flex-col gap-2">
         <div className="flex items-center gap-3">
           <span className="grid size-9 shrink-0 place-items-center rounded-md bg-primary text-primary-foreground">
             <HugeiconsIcon icon={EyeIcon} className="size-4" />
           </span>
           <div className="flex flex-col">
-            <span className="text-sm font-medium">Live link active</span>
+            <span className="text-sm font-medium">
+              {isPublic ? "You're viewing the live link" : "Live link active"}
+            </span>
             <span className="text-[11px] text-muted-foreground">
-              3 viewers this week · 2 returning
+              {isPublic
+                ? "Anyone with this link can view this page."
+                : "Anyone with the link can view."}
             </span>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs">
-            <HugeiconsIcon icon={Copy01Icon} className="size-3.5" />
-            Copy
-          </Button>
-          <Button size="sm" className="h-7 gap-1.5 text-xs">
-            <HugeiconsIcon icon={ArrowUpRight01Icon} className="size-3.5" />
-            Open as visitor
-          </Button>
-        </div>
+        {!isPublic ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 gap-1.5 text-xs"
+              onClick={handleCopy}
+            >
+              <HugeiconsIcon icon={Copy01Icon} className="size-3.5" />
+              Copy
+            </Button>
+            <Button
+              size="sm"
+              className="h-7 gap-1.5 text-xs"
+              onClick={handleOpen}
+            >
+              <HugeiconsIcon icon={ArrowUpRight01Icon} className="size-3.5" />
+              Open as visitor
+            </Button>
+          </div>
+        ) : null}
       </CardContent>
     </Card>
   )

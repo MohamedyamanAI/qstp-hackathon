@@ -1,6 +1,7 @@
 import { requireRole } from "@/lib/auth/require"
 
 import { DataRoomView, type RecentReport } from "./data-room-view"
+import type { ShareState } from "./actions"
 
 const RECENT_LIMIT = 6
 
@@ -14,8 +15,28 @@ export default async function FounderDataRoomPage() {
     .maybeSingle()
 
   let reports: RecentReport[] = []
+  let initialShare: ShareState = {
+    enabled: false,
+    token: null,
+    showCapTable: true,
+    showDocuments: true,
+  }
 
   if (startup) {
+    const { data: shareRow } = await supabase
+      .from("data_room_shares")
+      .select("token, enabled, show_cap_table, show_documents")
+      .eq("startup_id", startup.id)
+      .maybeSingle()
+    if (shareRow) {
+      initialShare = {
+        enabled: shareRow.enabled,
+        token: shareRow.token,
+        showCapTable: shareRow.show_cap_table,
+        showDocuments: shareRow.show_documents,
+      }
+    }
+
     const { data: rows } = await supabase
       .from("report_assignments")
       .select(
@@ -52,5 +73,5 @@ export default async function FounderDataRoomPage() {
     })
   }
 
-  return <DataRoomView reports={reports} />
+  return <DataRoomView reports={reports} initialShare={initialShare} />
 }

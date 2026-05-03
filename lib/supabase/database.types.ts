@@ -14,6 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      data_room_shares: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          expires_at: string | null
+          id: string
+          last_viewed_at: string | null
+          show_cap_table: boolean
+          show_documents: boolean
+          startup_id: string
+          token: string
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          expires_at?: string | null
+          id?: string
+          last_viewed_at?: string | null
+          show_cap_table?: boolean
+          show_documents?: boolean
+          startup_id: string
+          token: string
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          expires_at?: string | null
+          id?: string
+          last_viewed_at?: string | null
+          show_cap_table?: boolean
+          show_documents?: boolean
+          startup_id?: string
+          token?: string
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_room_shares_startup_id_fkey"
+            columns: ["startup_id"]
+            isOneToOne: true
+            referencedRelation: "startups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kpi_submissions: {
         Row: {
           created_at: string
