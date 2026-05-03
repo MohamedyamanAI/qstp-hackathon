@@ -65,50 +65,62 @@ export default async function TeamReportsPage() {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Published reports</CardTitle>
-          <CardDescription>
-            Each publication snapshots the template at the moment of publish.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {publications.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Nothing published yet.
-            </p>
-          ) : (
-            <ul className="flex flex-col gap-2">
-              {publications.map((p) => {
-                const assignments = p.report_assignments ?? []
-                const submitted = assignments.filter(
-                  (a) => a.status === "submitted"
-                ).length
-                return (
-                  <li
-                    key={p.id}
-                    className="flex items-center justify-between gap-3 rounded-md border border-border/60 bg-card px-3 py-2"
-                  >
-                    <div className="flex flex-col">
-                      <Link
-                        href={`/team/reports/${p.id}`}
-                        className="font-medium underline-offset-4 hover:underline"
-                      >
-                        {p.title}
-                      </Link>
-                      <span className="text-xs text-muted-foreground">
-                        Period {p.period_start} → {p.period_end} · due{" "}
-                        {p.due_date}
-                      </span>
-                    </div>
-                    <Badge variant="secondary">
-                      {submitted}/{assignments.length} submitted
-                    </Badge>
-                  </li>
-                )
-              })}
-            </ul>
-          )}
-        </CardContent>
+        <details>
+          <summary className="cursor-pointer list-none">
+            <CardHeader>
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <CardTitle>Published reports</CardTitle>
+                  <CardDescription>
+                    Each publication snapshots the template at the moment of
+                    publish.
+                  </CardDescription>
+                </div>
+                <Badge variant="outline" className="shrink-0">
+                  {publications.length}
+                </Badge>
+              </div>
+            </CardHeader>
+          </summary>
+          <CardContent>
+            {publications.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Nothing published yet.
+              </p>
+            ) : (
+              <ul className="flex flex-col gap-2">
+                {publications.map((p) => {
+                  const assignments = p.report_assignments ?? []
+                  const submitted = assignments.filter(
+                    (a) => a.status === "submitted"
+                  ).length
+                  return (
+                    <li
+                      key={p.id}
+                      className="flex items-center justify-between gap-3 rounded-md border border-border/60 bg-card px-3 py-2"
+                    >
+                      <div className="flex flex-col">
+                        <Link
+                          href={`/team/reports/${p.id}`}
+                          className="font-medium underline-offset-4 hover:underline"
+                        >
+                          {p.title}
+                        </Link>
+                        <span className="text-xs text-muted-foreground">
+                          Period {p.period_start} → {p.period_end} · due{" "}
+                          {p.due_date}
+                        </span>
+                      </div>
+                      <Badge variant="secondary">
+                        {submitted}/{assignments.length} submitted
+                      </Badge>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </CardContent>
+        </details>
       </Card>
 
       {template ? (
