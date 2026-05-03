@@ -27,7 +27,6 @@ import {
   Diamond02Icon,
   EyeIcon,
   FileSecurityIcon,
-  Folder02Icon,
   IdeaIcon,
   Linkedin02Icon,
   LockPasswordIcon,
@@ -44,7 +43,6 @@ import {
 } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -242,22 +240,17 @@ const MILESTONES = [
     title: "Closed $1.2M seed round",
     icon: MoneyBag02Icon,
   },
-  {
-    when: "Sep 2025",
-    title: "Featured in Gulf Times — Industrial AI in Qatar",
-    icon: SparklesIcon,
-  },
 ]
 
 const CUSTOMER_LOGOS = [
-  "Qatar Energy",
-  "Ooredoo",
-  "Mannai Corp",
-  "Al Faisal",
-  "Vodafone Qatar",
-  "Qatar Steel",
-  "QatarGas",
-  "Aspire Zone",
+  { name: "Qatar Energy", segment: "Enterprise", acv: "$82k", since: "Jan 2025" },
+  { name: "Ooredoo", segment: "Enterprise", acv: "$64k", since: "Mar 2025" },
+  { name: "Mannai Corp", segment: "Enterprise", acv: "$48k", since: "Apr 2025" },
+  { name: "Al Faisal", segment: "Mid-market", acv: "$28k", since: "Jun 2025" },
+  { name: "Vodafone Qatar", segment: "Enterprise", acv: "$56k", since: "Jul 2025" },
+  { name: "Qatar Steel", segment: "Enterprise", acv: "$72k", since: "Aug 2025" },
+  { name: "QatarGas", segment: "Enterprise", acv: "$90k", since: "Oct 2025" },
+  { name: "Aspire Zone", segment: "Mid-market", acv: "$22k", since: "Dec 2025" },
 ] as const
 
 const TESTIMONIALS = [
@@ -266,12 +259,14 @@ const TESTIMONIALS = [
       "Lumin replaced two contractors and gave us 24/7 visibility on rotating equipment. ROI in under five months.",
     author: "Yasmin Al-Kuwari",
     role: "VP Operations, Mannai Corp",
+    rating: 5,
   },
   {
     quote:
       "The integration was painless. Their team works like an extension of our reliability group.",
     author: "Hassan Mahmoud",
     role: "Head of Maintenance, Qatar Steel",
+    rating: 5,
   },
 ] as const
 
@@ -281,18 +276,48 @@ const TEAM = [
     role: "Co-founder & CEO",
     bio: "Ex-McKinsey energy practice. Led $40M digital transformation at Qatar Energy.",
     initials: "LH",
+    color: "--chart-1",
+    stats: [
+      { label: "Deals closed", value: "12" },
+      { label: "Revenue driven", value: "$1.8M" },
+    ],
+    skills: [
+      { label: "Strategy", percent: 92 },
+      { label: "Fundraising", percent: 85 },
+    ],
+    activity: [28, 34, 42, 38, 45, 52, 48, 56, 62, 58, 64, 70],
   },
   {
     name: "Omar Yamani",
     role: "Co-founder & CTO",
     bio: "PhD CMU Robotics. Two patents in industrial perception. Built control systems at Tesla.",
     initials: "OY",
+    color: "--chart-3",
+    stats: [
+      { label: "Patents", value: "2" },
+      { label: "Commits (90d)", value: "847" },
+    ],
+    skills: [
+      { label: "Architecture", percent: 95 },
+      { label: "ML / Vision", percent: 88 },
+    ],
+    activity: [40, 52, 48, 60, 55, 68, 72, 65, 78, 82, 75, 88],
   },
   {
     name: "Maya Patel",
     role: "Director of Engineering",
     bio: "Ex-Boston Dynamics. Shipped 4 production robotics systems for tier-1 industrial customers.",
     initials: "MP",
+    color: "--chart-5",
+    stats: [
+      { label: "Systems shipped", value: "4" },
+      { label: "Team managed", value: "9" },
+    ],
+    skills: [
+      { label: "Robotics", percent: 90 },
+      { label: "Leadership", percent: 82 },
+    ],
+    activity: [18, 24, 30, 36, 32, 40, 44, 48, 52, 56, 50, 58],
   },
 ] as const
 
@@ -324,39 +349,6 @@ const DOCUMENTS = [
   { name: "FY2025 Audit Report — KPMG.pdf", size: "3.7 MB", updated: "Apr 2026", restricted: true },
 ] as const
 
-const VIEWERS = [
-  {
-    who: "Investor link · anonymous",
-    action: "Opened pitch deck",
-    when: "2h ago",
-    duration: "11m 42s",
-  },
-  {
-    who: "majed@waha.vc",
-    action: "Viewed Trends + Team",
-    when: "Yesterday",
-    duration: "6m 18s",
-  },
-  {
-    who: "Investor link · anonymous",
-    action: "Returning viewer (3rd visit)",
-    when: "Yesterday",
-    duration: "9m 03s",
-  },
-  {
-    who: "scott@northstar.partners",
-    action: "Viewed full data room",
-    when: "2d ago",
-    duration: "14m 51s",
-  },
-  {
-    who: "Investor link · anonymous",
-    action: "Bounced after At-a-Glance",
-    when: "3d ago",
-    duration: "0m 47s",
-  },
-] as const
-
 const REVENUE_CHART_CONFIG: ChartConfig = {
   mrr: { label: "MRR (k)", color: "var(--chart-1)" },
 }
@@ -378,13 +370,21 @@ export default function FounderDataRoomPage() {
   const [shareable, setShareable] = React.useState(false)
 
   return (
-    <div className="flex flex-col gap-10">
-      <Header shareable={shareable} onToggle={setShareable} />
-      {shareable ? <LiveLinkBanner /> : <PrivateModeBanner />}
+    <div className="flex flex-col gap-8">
+      <Header shareable={shareable} onToggle={() => {}} />
+      <div className="grid grid-cols-[1fr_320px] items-start gap-6">
+        <Trends />
+        <div className="flex flex-col gap-3">
+          <PrivateShareToggle shareable={shareable} onToggle={setShareable} />
+          {shareable ? <LiveLinkBannerCompact /> : <PrivateModeBannerCompact />}
+          {!shareable ? <ThisWeekCard /> : null}
+        </div>
+      </div>
       <AtAGlance />
-      <Trends />
-      <GoalsSection />
-      <MilestonesSection />
+      <div className="grid grid-cols-2 items-stretch gap-6">
+        <GoalsSection />
+        <MilestonesSection />
+      </div>
       <TractionSection />
       <TeamSection />
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -392,41 +392,27 @@ export default function FounderDataRoomPage() {
         <ComplianceCard />
       </div>
       <DocumentsSection shareable={shareable} />
-      {!shareable ? <ViewerAnalytics /> : null}
     </div>
   )
 }
 
-function Header({
-  shareable,
-  onToggle,
-}: {
+function Header({}: {
   shareable: boolean
   onToggle: (v: boolean) => void
 }) {
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center gap-2">
-            <span className="grid size-9 place-items-center rounded-md bg-primary/10 text-primary">
-              <HugeiconsIcon icon={Folder02Icon} className="size-5" />
-            </span>
-            <h1 className="cn-font-heading text-3xl font-semibold tracking-tight">
-              Data Room
-            </h1>
-            <Badge variant="secondary" className="ml-1 font-normal">
-              Always live
-            </Badge>
-          </div>
-          <p className="max-w-2xl text-sm text-muted-foreground">
-            Your fundraise-ready company snapshot — KPIs, traction, team, cap
-            table and compliance, all auto-updated from your monthly submissions
-            and connected integrations. One link. Never stale.
+      <div className="flex items-end justify-between gap-3">
+        <div className="flex flex-col gap-0.5">
+          <h2 className="cn-font-heading text-xl font-semibold tracking-tight">
+            How we&apos;re growing
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Twelve months of momentum — toggle each chart to hide it from the
+            shareable view.
           </p>
         </div>
-
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
           <Button variant="outline" size="sm" className="gap-2">
             <HugeiconsIcon icon={Copy01Icon} className="size-4" />
             Copy link
@@ -446,104 +432,111 @@ function Header({
         </div>
       </div>
 
-      <Card className="border-dashed">
-        <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <span
-              className="grid size-9 place-items-center rounded-full"
-              style={{
-                background: shareable
-                  ? "color-mix(in oklch, var(--chart-1) 18%, transparent)"
-                  : "var(--muted)",
-                color: shareable ? "var(--chart-1)" : "var(--muted-foreground)",
-              }}
-            >
-              <HugeiconsIcon
-                icon={shareable ? EyeIcon : LockPasswordIcon}
-                className="size-4"
-                strokeWidth={2}
-              />
-            </span>
-            <div className="flex flex-col">
-              <span className="text-sm font-medium">
-                {shareable ? "Shareable view" : "Private view"}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                {shareable
-                  ? "Anyone with the link can view selected sections. Cap table and restricted docs require approval."
-                  : "Only you and your assigned team see this. Toggle on to publish a live investor link."}
-              </span>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-muted-foreground">Private</span>
-            <Switch checked={shareable} onCheckedChange={onToggle} />
-            <span className="text-xs text-muted-foreground">Shareable</span>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   )
 }
 
-function PrivateModeBanner() {
+
+function PrivateShareToggle({
+  shareable,
+  onToggle,
+}: {
+  shareable: boolean
+  onToggle: (v: boolean) => void
+}) {
   return (
-    <Card>
-      <CardContent className="flex flex-col gap-4 py-5 md:flex-row md:items-center md:justify-between">
+    <Card className="border-dashed">
+      <CardContent className="flex flex-col gap-3 py-4">
         <div className="flex items-center gap-3">
-          <span className="grid size-10 place-items-center rounded-md bg-foreground text-background">
-            <HugeiconsIcon icon={IdeaIcon} className="size-5" />
+          <span
+            className="grid size-9 shrink-0 place-items-center rounded-full"
+            style={{
+              background: shareable
+                ? "color-mix(in oklch, var(--chart-1) 18%, transparent)"
+                : "var(--muted)",
+              color: shareable ? "var(--chart-1)" : "var(--muted-foreground)",
+            }}
+          >
+            <HugeiconsIcon
+              icon={shareable ? EyeIcon : LockPasswordIcon}
+              className="size-4"
+              strokeWidth={2}
+            />
           </span>
-          <div className="flex flex-col gap-0.5">
+          <div className="flex flex-col">
             <span className="text-sm font-medium">
-              Your data room is investor-ready
+              {shareable ? "Shareable view" : "Private view"}
             </span>
-            <span className="text-xs text-muted-foreground">
-              Last refreshed 2 hours ago from your April submission ·{" "}
-              {COMPANY.name} · {COMPANY.stage} · {COMPANY.sector}
+            <span className="text-[11px] text-muted-foreground">
+              {shareable
+                ? "Anyone with the link can view."
+                : "Only you and your team see this."}
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <Badge variant="outline" className="gap-1.5">
-            <HugeiconsIcon icon={CheckmarkCircle02Icon} className="size-3.5" />
-            12 / 12 sections complete
-          </Badge>
-          <Badge variant="secondary">Ready to share</Badge>
+        <div className="flex items-center justify-center gap-3">
+          <span className="text-xs text-muted-foreground">Private</span>
+          <Switch checked={shareable} onCheckedChange={onToggle} />
+          <span className="text-xs text-muted-foreground">Shareable</span>
         </div>
       </CardContent>
     </Card>
   )
 }
 
-function LiveLinkBanner() {
+function PrivateModeBannerCompact() {
   return (
-    <Card className="overflow-hidden border-primary/30 bg-primary/[0.04]">
-      <CardContent className="flex flex-col gap-4 py-5">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-3">
-            <span className="grid size-10 place-items-center rounded-md bg-primary text-primary-foreground">
-              <HugeiconsIcon icon={EyeIcon} className="size-5" />
+    <Card size="sm">
+      <CardContent className="flex flex-col gap-2">
+        <div className="flex items-center gap-3">
+          <span className="grid size-9 shrink-0 place-items-center rounded-md bg-foreground text-background">
+            <HugeiconsIcon icon={IdeaIcon} className="size-4" />
+          </span>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-sm font-medium">Investor-ready</span>
+            <span className="text-[11px] text-muted-foreground">
+              Refreshed 2h ago · {COMPANY.stage} · {COMPANY.sector}
             </span>
-            <div className="flex flex-col">
-              <span className="text-sm font-medium">
-                Live link — qstp.app/r/lumin-x9k2
-              </span>
-              <span className="text-xs text-muted-foreground">
-                3 active viewers this week · 2 returning · Password protected
-              </span>
-            </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" size="sm" className="gap-2">
-              <HugeiconsIcon icon={Copy01Icon} className="size-4" />
-              Copy
-            </Button>
-            <Button size="sm" className="gap-2">
-              <HugeiconsIcon icon={ArrowUpRight01Icon} className="size-4" />
-              Open as visitor
-            </Button>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="outline" className="gap-1 text-[10px]">
+            <HugeiconsIcon icon={CheckmarkCircle02Icon} className="size-3" />
+            12 / 12 complete
+          </Badge>
+          <Badge variant="secondary" className="text-[10px]">
+            Ready to share
+          </Badge>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function LiveLinkBannerCompact() {
+  return (
+    <Card size="sm" className="overflow-hidden border-primary/30 bg-primary/[0.04]">
+      <CardContent className="flex flex-col gap-2">
+        <div className="flex items-center gap-3">
+          <span className="grid size-9 shrink-0 place-items-center rounded-md bg-primary text-primary-foreground">
+            <HugeiconsIcon icon={EyeIcon} className="size-4" />
+          </span>
+          <div className="flex flex-col">
+            <span className="text-sm font-medium">Live link active</span>
+            <span className="text-[11px] text-muted-foreground">
+              3 viewers this week · 2 returning
+            </span>
           </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs">
+            <HugeiconsIcon icon={Copy01Icon} className="size-3.5" />
+            Copy
+          </Button>
+          <Button size="sm" className="h-7 gap-1.5 text-xs">
+            <HugeiconsIcon icon={ArrowUpRight01Icon} className="size-3.5" />
+            Open as visitor
+          </Button>
         </div>
       </CardContent>
     </Card>
@@ -628,13 +621,8 @@ function KpiCard({ kpi }: { kpi: (typeof KPI_CARDS)[number] }) {
 
 function Trends() {
   return (
-    <section className="flex flex-col gap-4">
-      <SectionHeader
-        eyebrow="Trends"
-        title="How we're growing"
-        description="Twelve months of momentum — toggle each chart to hide it from the shareable view."
-      />
-      <Tabs defaultValue="revenue" className="w-full">
+    <section className="flex h-full flex-col">
+      <Tabs defaultValue="revenue" className="flex w-full flex-1 flex-col">
         <TabsList className="flex w-full flex-wrap justify-start gap-1">
           <TabsTrigger value="revenue">Revenue / MRR</TabsTrigger>
           <TabsTrigger value="customers">Customers</TabsTrigger>
@@ -642,7 +630,7 @@ function Trends() {
           <TabsTrigger value="headcount">Headcount</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="revenue" className="mt-4">
+        <TabsContent value="revenue" className="mt-4 flex-1">
           <ChartCard
             title="MRR — last 9 months"
             subtitle="Compounding ~12% MoM. ARR run-rate $2.2M."
@@ -650,7 +638,7 @@ function Trends() {
           >
             <ChartContainer
               config={REVENUE_CHART_CONFIG}
-              className="aspect-[16/6] h-[280px] w-full"
+              className="h-[200px] w-full"
             >
               <AreaChart
                 data={REVENUE_DATA}
@@ -690,7 +678,7 @@ function Trends() {
           >
             <ChartContainer
               config={CUSTOMER_CHART_CONFIG}
-              className="aspect-[16/6] h-[280px] w-full"
+              className="h-[200px] w-full"
             >
               <BarChart
                 data={CUSTOMER_DATA}
@@ -715,7 +703,7 @@ function Trends() {
           >
             <ChartContainer
               config={BURN_CHART_CONFIG}
-              className="aspect-[16/6] h-[280px] w-full"
+              className="h-[200px] w-full"
             >
               <LineChart
                 data={BURN_DATA}
@@ -757,7 +745,7 @@ function Trends() {
           >
             <ChartContainer
               config={HEADCOUNT_CHART_CONFIG}
-              className="aspect-[16/6] h-[280px] w-full"
+              className="h-[200px] w-full"
             >
               <BarChart
                 data={HEADCOUNT_DATA}
@@ -796,7 +784,7 @@ function ChartCard({
   children: React.ReactNode
 }) {
   return (
-    <Card>
+    <Card className="flex h-full flex-col">
       <CardHeader className="flex flex-row items-start justify-between gap-2">
         <div className="flex flex-col gap-1">
           <CardTitle className="text-base">{title}</CardTitle>
@@ -807,7 +795,7 @@ function ChartCard({
           {badge}
         </Badge>
       </CardHeader>
-      <CardContent>{children}</CardContent>
+      <CardContent className="flex-1">{children}</CardContent>
     </Card>
   )
 }
@@ -821,7 +809,7 @@ function GoalsSection() {
         title="What we said we'd do — and what we did"
         description={`${hits} of ${COMMITMENTS.length} stated quarterly commitments hit. Investors weight this heavily.`}
       />
-      <Card>
+      <Card className="flex-1">
         <CardContent className="space-y-5 py-6">
           {COMMITMENTS.map((c) => {
             const pct = Math.min(
@@ -873,7 +861,7 @@ function MilestonesSection() {
         title="Wins that compound"
         description="Auto-pulled from your monthly submissions, press monitoring and team approvals."
       />
-      <Card>
+      <Card className="flex-1">
         <CardContent className="py-6">
           <ol className="relative ml-3 space-y-6 border-l border-border/70">
             {MILESTONES.map((m) => (
@@ -904,55 +892,108 @@ function TractionSection() {
         title="Customers, in their words"
         description="Logos pulled from connected billing. Quotes approved by each customer."
       />
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.5fr_1fr]">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Active customers</CardTitle>
-            <CardDescription>
-              8 enterprise + 54 mid-market. Average contract value $36k.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {CUSTOMER_LOGOS.map((logo) => (
+      <Card className="overflow-hidden bg-gradient-to-br from-card via-muted/40 to-card p-0">
+        <div className="grid grid-cols-1 gap-6 p-5 lg:grid-cols-[1.5fr_1fr] md:p-6">
+          {/* Customer list */}
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-semibold">Active customers</h4>
+              <Badge variant="outline" className="gap-1.5 text-[10px]">
+                <HugeiconsIcon
+                  icon={CheckmarkCircle02Icon}
+                  className="size-3"
+                />
+                Verified · Stripe
+              </Badge>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              {CUSTOMER_LOGOS.map((c) => (
                 <div
-                  key={logo}
-                  className="flex h-16 items-center justify-center rounded-md border border-dashed bg-muted/40 px-3 text-center text-xs font-medium tracking-wide text-foreground/80"
+                  key={c.name}
+                  className="flex items-center justify-between gap-3 rounded-xl border bg-card/70 px-3 py-2.5 text-xs backdrop-blur"
                 >
-                  {logo}
+                  <span className="font-medium">{c.name}</span>
+                  <div className="flex items-center gap-3">
+                    <Badge
+                      variant="outline"
+                      className="h-4 border-transparent text-[9px]"
+                      style={{
+                        background:
+                          c.segment === "Enterprise"
+                            ? "color-mix(in oklch, var(--chart-1) 15%, transparent)"
+                            : "color-mix(in oklch, var(--chart-5) 15%, transparent)",
+                        color:
+                          c.segment === "Enterprise"
+                            ? "var(--chart-1)"
+                            : "var(--chart-5)",
+                      }}
+                    >
+                      {c.segment}
+                    </Badge>
+                    <span className="font-semibold tabular-nums">{c.acv}</span>
+                  </div>
                 </div>
               ))}
             </div>
-          </CardContent>
-          <CardFooter className="border-t py-3 text-xs text-muted-foreground">
-            <HugeiconsIcon icon={Database01Icon} className="mr-2 size-3.5" />
-            Synced 4 hours ago via Stripe + HubSpot
-          </CardFooter>
-        </Card>
+            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+              <HugeiconsIcon icon={Database01Icon} className="size-3" />
+              Synced 4 hours ago via Stripe + HubSpot
+            </div>
+          </div>
 
-        <div className="grid grid-cols-1 gap-4">
-          {TESTIMONIALS.map((t) => (
-            <Card key={t.author}>
-              <CardContent className="flex flex-col gap-3 py-5">
-                <p className="text-sm leading-relaxed text-foreground/90">
-                  “{t.quote}”
+          {/* Testimonials */}
+          <div className="flex flex-col gap-4">
+            {TESTIMONIALS.map((t) => (
+              <div
+                key={t.author}
+                className="flex flex-1 flex-col gap-3 rounded-xl border bg-card/70 p-4 backdrop-blur"
+              >
+                <div className="flex gap-0.5">
+                  {Array.from({ length: t.rating }).map((_, i) => (
+                    <HugeiconsIcon
+                      key={i}
+                      icon={StarsIcon}
+                      className="size-3.5"
+                      style={{ color: "var(--chart-5)" }}
+                    />
+                  ))}
+                </div>
+                <p className="flex-1 text-sm leading-relaxed text-foreground/90">
+                  &ldquo;{t.quote}&rdquo;
                 </p>
                 <Separator />
                 <div className="flex items-center justify-between gap-2">
-                  <div className="flex flex-col">
-                    <span className="text-xs font-medium">{t.author}</span>
-                    <span className="text-xs text-muted-foreground">{t.role}</span>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="grid size-7 shrink-0 place-items-center rounded-full text-[10px] font-semibold"
+                      style={{
+                        background:
+                          "color-mix(in oklch, var(--chart-3) 20%, var(--card))",
+                        color: "var(--chart-3)",
+                      }}
+                    >
+                      {t.author
+                        .split(" ")
+                        .map((w) => w[0])
+                        .join("")}
+                    </span>
+                    <div className="flex flex-col">
+                      <span className="text-xs font-medium">{t.author}</span>
+                      <span className="text-[10px] text-muted-foreground">
+                        {t.role}
+                      </span>
+                    </div>
                   </div>
-                  <Badge variant="outline" className="gap-1">
+                  <Badge variant="outline" className="gap-1 text-[10px]">
                     <HugeiconsIcon icon={Linkedin02Icon} className="size-3" />
                     Verified
                   </Badge>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      </Card>
     </section>
   )
 }
@@ -965,34 +1006,146 @@ function TeamSection() {
         title="Who's building this"
         description={`${COMPANY.team} people, distributed across Doha and Cambridge.`}
       />
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        {TEAM.map((p) => (
-          <Card key={p.name}>
-            <CardContent className="flex flex-col gap-3 py-5">
-              <div className="flex items-center gap-3">
-                <Avatar className="size-12">
-                  <AvatarFallback className="bg-foreground text-sm font-semibold text-background">
+      <Card className="overflow-hidden bg-gradient-to-br from-card via-muted/40 to-card p-0">
+        <div className="grid grid-cols-1 gap-4 p-5 md:grid-cols-3 md:p-6">
+          {TEAM.map((p) => {
+            const sparkData = p.activity.map((v, i) => ({ i, v }))
+            const gradId = `team-spark-${p.initials}`
+            return (
+              <div
+                key={p.name}
+                className="flex flex-col gap-3 rounded-xl border bg-card/70 p-4 backdrop-blur"
+              >
+                {/* Header: avatar + name */}
+                <div className="flex items-center gap-3">
+                  <span
+                    className="grid size-10 shrink-0 place-items-center rounded-lg text-sm font-semibold"
+                    style={{
+                      background: `color-mix(in oklch, var(${p.color}) 20%, var(--card))`,
+                      color: `var(${p.color})`,
+                    }}
+                  >
                     {p.initials}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col">
-                  <span className="text-sm font-semibold">{p.name}</span>
-                  <span className="text-xs text-muted-foreground">{p.role}</span>
+                  </span>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-semibold">{p.name}</span>
+                    <span className="text-[10px] text-muted-foreground">
+                      {p.role}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Mini stats row */}
+                <div className="grid grid-cols-2 gap-2">
+                  {p.stats.map((s) => (
+                    <div
+                      key={s.label}
+                      className="flex flex-col gap-0.5 rounded-lg border bg-card/50 p-2"
+                    >
+                      <span className="text-[10px] text-muted-foreground">
+                        {s.label}
+                      </span>
+                      <span className="text-sm font-semibold tabular-nums">
+                        {s.value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Skill donut badges */}
+                <div className="flex items-center gap-4">
+                  {p.skills.map((sk) => {
+                    const size = 36
+                    const sw = 3
+                    const r = (size - sw) / 2
+                    const C = 2 * Math.PI * r
+                    const dash = (sk.percent / 100) * C
+                    return (
+                      <div key={sk.label} className="flex items-center gap-2">
+                        <div className="relative grid place-items-center" style={{ width: size, height: size }}>
+                          <svg viewBox={`0 0 ${size} ${size}`} className="-rotate-90" style={{ width: size, height: size }}>
+                            <circle
+                              cx={size / 2}
+                              cy={size / 2}
+                              r={r}
+                              fill="none"
+                              stroke="var(--border)"
+                              strokeWidth={sw}
+                            />
+                            <circle
+                              cx={size / 2}
+                              cy={size / 2}
+                              r={r}
+                              fill="none"
+                              stroke={`var(${p.color})`}
+                              strokeWidth={sw}
+                              strokeLinecap="round"
+                              strokeDasharray={`${dash} ${C}`}
+                            />
+                          </svg>
+                          <span className="absolute text-[8px] font-semibold tabular-nums">
+                            {sk.percent}%
+                          </span>
+                        </div>
+                        <div className="flex flex-col leading-tight">
+                          <span className="text-[10px] font-medium">
+                            {sk.label}
+                          </span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {/* Activity sparkline */}
+                <div className="rounded-lg border bg-card/50 p-2">
+                  <div className="mb-1 flex items-center justify-between">
+                    <span className="text-[10px] text-muted-foreground">
+                      Activity
+                    </span>
+                    <Badge variant="outline" className="gap-1 text-[10px]">
+                      <HugeiconsIcon icon={Linkedin02Icon} className="size-3" />
+                      LinkedIn
+                    </Badge>
+                  </div>
+                  <ChartContainer
+                    config={{ v: { color: `var(${p.color})` } }}
+                    className="h-10 w-full"
+                  >
+                    <AreaChart
+                      data={sparkData}
+                      margin={{ top: 2, right: 0, bottom: 0, left: 0 }}
+                    >
+                      <defs>
+                        <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+                          <stop
+                            offset="0%"
+                            stopColor={`var(${p.color})`}
+                            stopOpacity={0.4}
+                          />
+                          <stop
+                            offset="100%"
+                            stopColor={`var(${p.color})`}
+                            stopOpacity={0}
+                          />
+                        </linearGradient>
+                      </defs>
+                      <Area
+                        type="monotone"
+                        dataKey="v"
+                        stroke={`var(${p.color})`}
+                        strokeWidth={1.5}
+                        fill={`url(#${gradId})`}
+                        isAnimationActive={false}
+                      />
+                    </AreaChart>
+                  </ChartContainer>
                 </div>
               </div>
-              <p className="text-xs leading-relaxed text-muted-foreground">
-                {p.bio}
-              </p>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="gap-1 text-[10px]">
-                  <HugeiconsIcon icon={Linkedin02Icon} className="size-3" />
-                  LinkedIn
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+            )
+          })}
+        </div>
+      </Card>
     </section>
   )
 }
@@ -1090,124 +1243,91 @@ function DocumentsSection({ shareable }: { shareable: boolean }) {
             : "Toggle which documents appear in the shareable view. Restricted docs require explicit approval each time."
         }
       />
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Document</TableHead>
-                <TableHead className="hidden sm:table-cell">Size</TableHead>
-                <TableHead className="hidden md:table-cell">Updated</TableHead>
-                <TableHead>Visibility</TableHead>
-                <TableHead className="text-right">Action</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {DOCUMENTS.map((d) => (
-                <TableRow key={d.name}>
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-2">
-                      <HugeiconsIcon
-                        icon={FileSecurityIcon}
-                        className="size-4 text-muted-foreground"
-                      />
-                      <span>{d.name}</span>
+      <Card className="overflow-hidden bg-gradient-to-br from-card via-muted/40 to-card p-0">
+        <div className="flex flex-col gap-3 p-5 md:p-6">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {DOCUMENTS.map((d) => (
+              <div
+                key={d.name}
+                className="flex flex-col gap-3 rounded-xl border bg-card/70 p-4 backdrop-blur transition hover:ring-1 hover:ring-foreground/10"
+              >
+                <div className="flex items-start gap-3">
+                  <span
+                    className="grid size-9 shrink-0 place-items-center rounded-lg"
+                    style={{
+                      background: d.restricted
+                        ? "color-mix(in oklch, var(--chart-3) 15%, var(--card))"
+                        : "color-mix(in oklch, var(--chart-1) 15%, var(--card))",
+                      color: d.restricted
+                        ? "var(--chart-3)"
+                        : "var(--chart-1)",
+                    }}
+                  >
+                    <HugeiconsIcon
+                      icon={d.restricted ? LockPasswordIcon : FileSecurityIcon}
+                      className="size-4"
+                    />
+                  </span>
+                  <div className="flex min-w-0 flex-col gap-0.5">
+                    <span className="truncate text-xs font-medium">
+                      {d.name}
+                    </span>
+                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                      <span className="font-mono">{d.size}</span>
+                      <span>·</span>
+                      <span>{d.updated}</span>
                     </div>
-                  </TableCell>
-                  <TableCell className="hidden font-mono text-xs text-muted-foreground sm:table-cell">
-                    {d.size}
-                  </TableCell>
-                  <TableCell className="hidden text-xs text-muted-foreground md:table-cell">
-                    {d.updated}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={d.restricted ? "outline" : "secondary"}
-                      className="gap-1.5"
-                    >
-                      <HugeiconsIcon
-                        icon={d.restricted ? LockPasswordIcon : EyeIcon}
-                        className="size-3"
-                      />
-                      {d.restricted ? "Restricted" : "Visible"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="sm">
-                      {d.restricted ? "Manage access" : "Preview"}
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <Badge
+                    variant="outline"
+                    className="gap-1 border-transparent text-[10px]"
+                    style={{
+                      background: d.restricted
+                        ? "color-mix(in oklch, var(--chart-3) 12%, transparent)"
+                        : "color-mix(in oklch, var(--chart-1) 12%, transparent)",
+                      color: d.restricted
+                        ? "var(--chart-3)"
+                        : "var(--chart-1)",
+                    }}
+                  >
+                    <HugeiconsIcon
+                      icon={d.restricted ? LockPasswordIcon : EyeIcon}
+                      className="size-3"
+                    />
+                    {d.restricted ? "Restricted" : "Visible"}
+                  </Badge>
+                  <Button variant="ghost" size="sm" className="h-6 text-[10px]">
+                    {d.restricted ? "Manage access" : "Preview"}
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </Card>
     </section>
   )
 }
 
-function ViewerAnalytics() {
-  return (
-    <section className="flex flex-col gap-4">
-      <SectionHeader
-        eyebrow="Viewer analytics"
-        title="Who's reading your data room"
-        description="Private to you. Returning viewers and time-on-section are strong signals — follow up while it's hot."
-      />
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_1.6fr]">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">This week</CardTitle>
-            <CardDescription>
-              majed@waha.vc viewed your data room 3 times — high intent.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <ViewerStat label="Unique viewers" value="11" delta="+4 WoW" />
-            <ViewerStat label="Returning viewers" value="3" delta="+2 WoW" />
-            <ViewerStat label="Avg. time on page" value="6m 42s" delta="+1m 12s" />
-            <ViewerStat label="Doc requests" value="2" delta="0 pending" />
-          </CardContent>
-        </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Recent activity</CardTitle>
-            <CardDescription>
-              Anonymous viewer identities are never revealed — this is what each
-              chose to share.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Visitor</TableHead>
-                  <TableHead>Activity</TableHead>
-                  <TableHead className="hidden md:table-cell">When</TableHead>
-                  <TableHead className="text-right">Time</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {VIEWERS.map((v, i) => (
-                  <TableRow key={i}>
-                    <TableCell className="font-mono text-xs">{v.who}</TableCell>
-                    <TableCell className="text-xs">{v.action}</TableCell>
-                    <TableCell className="hidden text-xs text-muted-foreground md:table-cell">
-                      {v.when}
-                    </TableCell>
-                    <TableCell className="text-right font-mono text-xs tabular-nums">
-                      {v.duration}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </div>
-    </section>
+function ThisWeekCard() {
+  return (
+    <Card size="sm">
+      <CardHeader>
+        <CardTitle className="text-sm">This week</CardTitle>
+        <CardDescription className="text-[10px]">
+          3 viewers · 2 returning
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        <ViewerStat label="Unique viewers" value="11" delta="+4 WoW" />
+        <ViewerStat label="Returning" value="3" delta="+2 WoW" />
+        <ViewerStat label="Avg. time" value="6m 42s" delta="+1m 12s" />
+        <ViewerStat label="Doc requests" value="2" delta="0 pending" />
+      </CardContent>
+    </Card>
   )
 }
 
@@ -1221,16 +1341,14 @@ function ViewerStat({
   delta: string
 }) {
   return (
-    <div className="flex items-baseline justify-between border-b border-border/50 pb-3 last:border-b-0 last:pb-0">
-      <div className="flex flex-col">
-        <span className="text-xs text-muted-foreground">{label}</span>
-        <span className="cn-font-heading text-2xl font-semibold tabular-nums">
-          {value}
-        </span>
+    <div className="flex items-center justify-between border-b border-border/50 pb-2 last:border-b-0 last:pb-0">
+      <span className="text-[11px] text-muted-foreground">{label}</span>
+      <div className="flex items-center gap-2">
+        <span className="text-sm font-semibold tabular-nums">{value}</span>
+        <Badge variant="outline" className="h-4 text-[9px] font-normal">
+          {delta}
+        </Badge>
       </div>
-      <Badge variant="outline" className="font-normal">
-        {delta}
-      </Badge>
     </div>
   )
 }
