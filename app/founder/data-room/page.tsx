@@ -349,39 +349,6 @@ const DOCUMENTS = [
   { name: "FY2025 Audit Report — KPMG.pdf", size: "3.7 MB", updated: "Apr 2026", restricted: true },
 ] as const
 
-const VIEWERS = [
-  {
-    who: "Investor link · anonymous",
-    action: "Opened pitch deck",
-    when: "2h ago",
-    duration: "11m 42s",
-  },
-  {
-    who: "majed@waha.vc",
-    action: "Viewed Trends + Team",
-    when: "Yesterday",
-    duration: "6m 18s",
-  },
-  {
-    who: "Investor link · anonymous",
-    action: "Returning viewer (3rd visit)",
-    when: "Yesterday",
-    duration: "9m 03s",
-  },
-  {
-    who: "scott@northstar.partners",
-    action: "Viewed full data room",
-    when: "2d ago",
-    duration: "14m 51s",
-  },
-  {
-    who: "Investor link · anonymous",
-    action: "Bounced after At-a-Glance",
-    when: "3d ago",
-    duration: "0m 47s",
-  },
-] as const
-
 const REVENUE_CHART_CONFIG: ChartConfig = {
   mrr: { label: "MRR (k)", color: "var(--chart-1)" },
 }
@@ -405,7 +372,7 @@ export default function FounderDataRoomPage() {
   return (
     <div className="flex flex-col gap-8">
       <Header shareable={shareable} onToggle={() => {}} />
-      <div className="grid grid-cols-[1fr_320px] items-stretch gap-6">
+      <div className="grid grid-cols-[1fr_320px] items-start gap-6">
         <Trends />
         <div className="flex flex-col gap-3">
           <PrivateShareToggle shareable={shareable} onToggle={setShareable} />
@@ -425,7 +392,6 @@ export default function FounderDataRoomPage() {
         <ComplianceCard />
       </div>
       <DocumentsSection shareable={shareable} />
-      {!shareable ? <ViewerAnalytics /> : null}
     </div>
   )
 }
@@ -672,7 +638,7 @@ function Trends() {
           >
             <ChartContainer
               config={REVENUE_CHART_CONFIG}
-              className="h-full min-h-[280px] w-full"
+              className="h-[200px] w-full"
             >
               <AreaChart
                 data={REVENUE_DATA}
@@ -712,7 +678,7 @@ function Trends() {
           >
             <ChartContainer
               config={CUSTOMER_CHART_CONFIG}
-              className="h-full min-h-[280px] w-full"
+              className="h-[200px] w-full"
             >
               <BarChart
                 data={CUSTOMER_DATA}
@@ -737,7 +703,7 @@ function Trends() {
           >
             <ChartContainer
               config={BURN_CHART_CONFIG}
-              className="h-full min-h-[280px] w-full"
+              className="h-[200px] w-full"
             >
               <LineChart
                 data={BURN_DATA}
@@ -779,7 +745,7 @@ function Trends() {
           >
             <ChartContainer
               config={HEADCOUNT_CHART_CONFIG}
-              className="h-full min-h-[280px] w-full"
+              className="h-[200px] w-full"
             >
               <BarChart
                 data={HEADCOUNT_DATA}
@@ -1277,109 +1243,74 @@ function DocumentsSection({ shareable }: { shareable: boolean }) {
             : "Toggle which documents appear in the shareable view. Restricted docs require explicit approval each time."
         }
       />
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Document</TableHead>
-                <TableHead className="hidden sm:table-cell">Size</TableHead>
-                <TableHead className="hidden md:table-cell">Updated</TableHead>
-                <TableHead>Visibility</TableHead>
-                <TableHead className="text-right">Action</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {DOCUMENTS.map((d) => (
-                <TableRow key={d.name}>
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-2">
-                      <HugeiconsIcon
-                        icon={FileSecurityIcon}
-                        className="size-4 text-muted-foreground"
-                      />
-                      <span>{d.name}</span>
+      <Card className="overflow-hidden bg-gradient-to-br from-card via-muted/40 to-card p-0">
+        <div className="flex flex-col gap-3 p-5 md:p-6">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {DOCUMENTS.map((d) => (
+              <div
+                key={d.name}
+                className="flex flex-col gap-3 rounded-xl border bg-card/70 p-4 backdrop-blur transition hover:ring-1 hover:ring-foreground/10"
+              >
+                <div className="flex items-start gap-3">
+                  <span
+                    className="grid size-9 shrink-0 place-items-center rounded-lg"
+                    style={{
+                      background: d.restricted
+                        ? "color-mix(in oklch, var(--chart-3) 15%, var(--card))"
+                        : "color-mix(in oklch, var(--chart-1) 15%, var(--card))",
+                      color: d.restricted
+                        ? "var(--chart-3)"
+                        : "var(--chart-1)",
+                    }}
+                  >
+                    <HugeiconsIcon
+                      icon={d.restricted ? LockPasswordIcon : FileSecurityIcon}
+                      className="size-4"
+                    />
+                  </span>
+                  <div className="flex min-w-0 flex-col gap-0.5">
+                    <span className="truncate text-xs font-medium">
+                      {d.name}
+                    </span>
+                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                      <span className="font-mono">{d.size}</span>
+                      <span>·</span>
+                      <span>{d.updated}</span>
                     </div>
-                  </TableCell>
-                  <TableCell className="hidden font-mono text-xs text-muted-foreground sm:table-cell">
-                    {d.size}
-                  </TableCell>
-                  <TableCell className="hidden text-xs text-muted-foreground md:table-cell">
-                    {d.updated}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={d.restricted ? "outline" : "secondary"}
-                      className="gap-1.5"
-                    >
-                      <HugeiconsIcon
-                        icon={d.restricted ? LockPasswordIcon : EyeIcon}
-                        className="size-3"
-                      />
-                      {d.restricted ? "Restricted" : "Visible"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="sm">
-                      {d.restricted ? "Manage access" : "Preview"}
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <Badge
+                    variant="outline"
+                    className="gap-1 border-transparent text-[10px]"
+                    style={{
+                      background: d.restricted
+                        ? "color-mix(in oklch, var(--chart-3) 12%, transparent)"
+                        : "color-mix(in oklch, var(--chart-1) 12%, transparent)",
+                      color: d.restricted
+                        ? "var(--chart-3)"
+                        : "var(--chart-1)",
+                    }}
+                  >
+                    <HugeiconsIcon
+                      icon={d.restricted ? LockPasswordIcon : EyeIcon}
+                      className="size-3"
+                    />
+                    {d.restricted ? "Restricted" : "Visible"}
+                  </Badge>
+                  <Button variant="ghost" size="sm" className="h-6 text-[10px]">
+                    {d.restricted ? "Manage access" : "Preview"}
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </Card>
     </section>
   )
 }
 
-function ViewerAnalytics() {
-  return (
-    <section className="flex flex-col gap-4">
-      <SectionHeader
-        eyebrow="Viewer analytics"
-        title="Who's reading your data room"
-        description="Private to you. Returning viewers and time-on-section are strong signals — follow up while it's hot."
-      />
-      <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Recent activity</CardTitle>
-            <CardDescription>
-              Anonymous viewer identities are never revealed — this is what each
-              chose to share.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Visitor</TableHead>
-                  <TableHead>Activity</TableHead>
-                  <TableHead className="hidden md:table-cell">When</TableHead>
-                  <TableHead className="text-right">Time</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {VIEWERS.map((v, i) => (
-                  <TableRow key={i}>
-                    <TableCell className="font-mono text-xs">{v.who}</TableCell>
-                    <TableCell className="text-xs">{v.action}</TableCell>
-                    <TableCell className="hidden text-xs text-muted-foreground md:table-cell">
-                      {v.when}
-                    </TableCell>
-                    <TableCell className="text-right font-mono text-xs tabular-nums">
-                      {v.duration}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-      </Card>
-    </section>
-  )
-}
 
 function ThisWeekCard() {
   return (
