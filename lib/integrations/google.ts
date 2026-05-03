@@ -13,6 +13,7 @@ const SCOPES = [
   "profile",
   "https://www.googleapis.com/auth/gmail.readonly",
   "https://www.googleapis.com/auth/drive.metadata.readonly",
+  "https://www.googleapis.com/auth/presentations",
 ]
 
 type GoogleTokenResponse = {
@@ -244,6 +245,32 @@ async function ensureFreshAccessToken(admin: AdminClient, connectionId: string) 
 
 export async function fetchGoogleProfile(accessToken: string) {
   return fetchGoogleUserInfo(accessToken)
+}
+
+export async function getGoogleAccessTokenForStartup(
+  startupId: string
+): Promise<{ ok: true; accessToken: string } | { ok: false; reason: string }> {
+  const admin = createAdminClient()
+  const { data: connection, error } = await admin
+    .from("startup_integration_connections")
+    .select("id, status, access_token, scopes")
+    .eq("startup_id", startupId)
+    .eq("provider", GOOGLE_PROVIDER)
+    .maybeSingle()
+  if (error) return { ok: false, reason: error.message }
+  if (!connection || connection.status !== "connected" || !connection.access_token) {
+    return { ok: false, reason: "google_not_connected" }
+  }
+  const scopes = Array.isArray(connection.scopes) ? connection.scopes : []
+  if (!scopes.includes("https://www.googleapis.com/auth/presentations")) {
+    return { ok: false, reason: "needs_reauth" }
+  }
+  try {
+    const accessToken = await ensureFreshAccessToken(admin, connection.id)
+    return { ok: true, accessToken }
+  } catch (e) {
+    return { ok: false, reason: e instanceof Error ? e.message : "token_refresh_failed" }
+  }
 }
 
 export async function syncGoogleForStartup({

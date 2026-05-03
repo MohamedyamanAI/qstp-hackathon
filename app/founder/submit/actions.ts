@@ -13,6 +13,11 @@ import {
 import { syncGoogleForStartup } from "@/lib/integrations/google"
 import { syncStripeForStartup } from "@/lib/integrations/stripe"
 import {
+  readDeckUrlFromExtendedProfile,
+  syncDeckFromMetrics,
+  type DeckSyncResult,
+} from "@/lib/reports/deck-sync"
+import {
   extractFromGoogle,
   type DriveTitleInput,
   type ExtractedField,
@@ -517,6 +522,45 @@ export async function submitReport(
     .from("report_assignments")
     .update({ status: "submitted" })
     .eq("id", assignment.id)
+
+  // Fire-and-don't-fail: sync the founder's pitch deck with the new numbers.
+  const deckUrl = readDeckUrlFromExtendedProfile(
+    assignment.startups.extended_profile
+  )
+  if (deckUrl) {
+    try {
+      const result = await syncDeckFromMetrics({
+        startupId: assignment.startup_id,
+        deckUrl,
+        questions,
+        answers,
+        startupName: assignment.startups.name,
+        periodLabel: `${assignment.report_publications.period_start} → ${assignment.report_publications.period_end}`,
+      })
+      const { data: existingSub } = await supabase
+        .from("kpi_submissions")
+        .select("generated_outputs")
+        .eq("id", assignment.submission_id)
+        .maybeSingle()
+      const existingOutputs =
+        existingSub?.generated_outputs &&
+        typeof existingSub.generated_outputs === "object" &&
+        !Array.isArray(existingSub.generated_outputs)
+          ? (existingSub.generated_outputs as Record<string, unknown>)
+          : {}
+      await supabase
+        .from("kpi_submissions")
+        .update({
+          generated_outputs: {
+            ...existingOutputs,
+            deck_sync: result as unknown as Json,
+          } as unknown as Json,
+        })
+        .eq("id", assignment.submission_id)
+    } catch (error) {
+      console.warn("[deck-sync] failed", error)
+    }
+  }
 
   const { data: teamMembers } = await supabase
     .from("profiles")
@@ -1150,6 +1194,85 @@ export async function markFilingSubmitted(
 
   revalidatePath(`/founder/submit/${input.assignmentId}`)
   return { ok: true, submittedAt }
+}
+
+// ---------------------------------------------------------------------------
+// Pitch deck — manual re-sync against the latest submission metrics
+// ---------------------------------------------------------------------------
+
+export type ResyncDeckResult =
+  | { ok: true; data: DeckSyncResult }
+  | { ok: false; error: string }
+
+export async function resyncDeck(
+  assignmentId: string
+): Promise<ResyncDeckResult> {
+  const { supabase, userId } = await requireRole("founder")
+  const assignment = await loadAssignmentForFounder(
+    supabase,
+    userId,
+    assignmentId
+  )
+  if (!assignment || !assignment.submission_id) {
+    return { ok: false, error: "Submission not found." }
+  }
+
+  const deckUrl = readDeckUrlFromExtendedProfile(
+    assignment.startups.extended_profile
+  )
+  if (!deckUrl) {
+    return {
+      ok: false,
+      error: "Add a Google Slides URL in the data room first.",
+    }
+  }
+
+  const { data: submission } = await supabase
+    .from("kpi_submissions")
+    .select("id, metrics, generated_outputs")
+    .eq("id", assignment.submission_id)
+    .maybeSingle()
+  if (!submission) return { ok: false, error: "Submission not found." }
+
+  const questions = parseQuestions(assignment.report_publications.questions)
+  const answers = parseAnswers(submission.metrics)
+
+  let result: DeckSyncResult
+  try {
+    result = await syncDeckFromMetrics({
+      startupId: assignment.startup_id,
+      deckUrl,
+      questions,
+      answers,
+      startupName: assignment.startups.name,
+      periodLabel: `${assignment.report_publications.period_start} → ${assignment.report_publications.period_end}`,
+    })
+  } catch (e) {
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : "Deck sync failed.",
+    }
+  }
+
+  const existingOutputs =
+    submission.generated_outputs &&
+    typeof submission.generated_outputs === "object" &&
+    !Array.isArray(submission.generated_outputs)
+      ? (submission.generated_outputs as Record<string, unknown>)
+      : {}
+  await supabase
+    .from("kpi_submissions")
+    .update({
+      generated_outputs: {
+        ...existingOutputs,
+        deck_sync: result as unknown as Json,
+      } as unknown as Json,
+    })
+    .eq("id", submission.id)
+
+  revalidatePath(`/founder/submit/${assignmentId}`)
+  revalidatePath("/founder/data-room")
+  return { ok: true, data: result }
 }
 
 function bytesToBase64(bytes: Uint8Array): string {

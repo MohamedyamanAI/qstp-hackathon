@@ -4,8 +4,10 @@ import * as React from "react"
 import { toast } from "sonner"
 
 import {
+  setDeckUrl,
   setShareEnabled,
   regenerateShareToken,
+  type DeckUrlState,
   type ShareState,
 } from "./actions"
 import {
@@ -23,9 +25,11 @@ import {
   YAxis,
 } from "recharts"
 import {
+  AlertCircleIcon,
   ArrowDown01Icon,
   ArrowUp01Icon,
   ArrowUpRight01Icon,
+  Presentation01Icon,
   Building03Icon,
   Calendar01Icon,
   CheckmarkBadge01Icon,
@@ -56,6 +60,7 @@ import { HugeiconsIcon } from "@hugeicons/react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import {
   Card,
   CardContent,
@@ -95,6 +100,13 @@ export type RecentReport = {
   status: "pending" | "draft" | "in_progress" | "submitted"
   submittedAt: string | null
   metrics: Record<string, number | string | boolean | null>
+}
+
+export type DeckSyncStatus = {
+  syncedAt: string
+  appliedCount: number
+  skippedCount: number
+  error: string | null
 }
 
 const COMPANY = {
@@ -380,10 +392,14 @@ const HEADCOUNT_CHART_CONFIG: ChartConfig = {
 export function DataRoomView({
   reports,
   initialShare,
+  initialDeckUrl = null,
+  initialDeckSync = null,
   mode = "founder",
 }: {
   reports: RecentReport[]
   initialShare?: ShareState
+  initialDeckUrl?: string | null
+  initialDeckSync?: DeckSyncStatus | null
   mode?: "founder" | "public"
 }) {
   const isPublic = mode === "public"
@@ -463,7 +479,12 @@ export function DataRoomView({
           ) : (
             <PrivateModeBannerCompact />
           )}
-          <ReportingStreakCard reports={reports} />
+          {!isPublic ? (
+            <PitchDeckCard
+              initialUrl={initialDeckUrl}
+              initialSync={initialDeckSync}
+            />
+          ) : null}
         </div>
       </div>
       <AtAGlance />
@@ -768,24 +789,153 @@ function LiveLinkBannerCompact({
   )
 }
 
-function ReportingStreakCard({ reports }: { reports: RecentReport[] }) {
-  const submitted = reports.filter((r) => r.status === "submitted").length
-  const total = reports.length
+function PitchDeckCard({
+  initialUrl,
+  initialSync,
+}: {
+  initialUrl: string | null
+  initialSync: DeckSyncStatus | null
+}) {
+  const [url, setUrl] = React.useState(initialUrl ?? "")
+  const [savedUrl, setSavedUrl] = React.useState<string | null>(initialUrl)
+  const [pending, startTransition] = React.useTransition()
+
+  const onSave = () => {
+    startTransition(async () => {
+      try {
+        const result: DeckUrlState = await setDeckUrl(url)
+        setSavedUrl(result.url)
+        setUrl(result.url ?? "")
+        toast.success(
+          result.url ? "Deck linked. Numbers will sync on submit." : "Deck unlinked."
+        )
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Could not save link.")
+      }
+    })
+  }
+
+  const onClear = () => {
+    setUrl("")
+    startTransition(async () => {
+      try {
+        await setDeckUrl("")
+        setSavedUrl(null)
+        toast.success("Deck unlinked.")
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Could not unlink.")
+      }
+    })
+  }
+
+  const dirty = (url.trim() || null) !== (savedUrl ?? null)
+  const sync = initialSync
+
   return (
     <Card size="sm">
-      <CardContent className="flex items-center gap-3 py-2.5">
-        <span className="grid size-8 shrink-0 place-items-center rounded-md bg-foreground text-background">
-          <HugeiconsIcon icon={SparklesIcon} className="size-3.5" />
-        </span>
-        <div className="flex min-w-0 flex-col gap-0.5">
-          <span className="text-xs font-medium">Reporting streak</span>
-          <span className="text-[10px] text-muted-foreground">
-            {submitted} of {total || 0} cycles · top decile cadence
+      <CardContent className="flex flex-col gap-2.5 py-3">
+        <div className="flex items-center gap-2">
+          <span className="grid size-7 shrink-0 place-items-center rounded-md bg-foreground text-background">
+            <HugeiconsIcon icon={Presentation01Icon} className="size-3.5" />
           </span>
+          <div className="flex min-w-0 flex-col">
+            <span className="text-xs font-medium">Pitch deck auto-sync</span>
+            <span className="text-[10px] text-muted-foreground">
+              Numbers update on submit
+            </span>
+          </div>
+          {savedUrl ? (
+            <a
+              href={savedUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-auto text-muted-foreground hover:text-foreground"
+              title="Open deck"
+            >
+              <HugeiconsIcon icon={ArrowUpRight01Icon} className="size-3.5" />
+            </a>
+          ) : null}
         </div>
+        <div className="flex gap-1.5">
+          <Input
+            type="url"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="docs.google.com/presentation/d/…"
+            className="h-8 text-xs"
+            disabled={pending}
+          />
+          <Button
+            size="sm"
+            variant="default"
+            className="h-8 text-xs"
+            onClick={onSave}
+            disabled={pending || !dirty || url.trim() === ""}
+          >
+            Save
+          </Button>
+        </div>
+        {savedUrl ? (
+          <button
+            type="button"
+            onClick={onClear}
+            disabled={pending}
+            className="self-start text-[10px] text-muted-foreground hover:text-foreground"
+          >
+            Unlink deck
+          </button>
+        ) : null}
+        {sync ? <DeckSyncSummary sync={sync} /> : null}
       </CardContent>
     </Card>
   )
+}
+
+function DeckSyncSummary({ sync }: { sync: DeckSyncStatus }) {
+  const when = sync.syncedAt
+    ? new Date(sync.syncedAt).toLocaleString("en-US", {
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      })
+    : null
+
+  if (sync.error) {
+    return (
+      <div className="flex items-start gap-1.5 text-[10px] text-amber-700 dark:text-amber-500">
+        <HugeiconsIcon icon={AlertCircleIcon} className="mt-0.5 size-3 shrink-0" />
+        <span>
+          Last sync failed: {humanizeError(sync.error)}
+          {when ? ` · ${when}` : null}
+        </span>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+      <HugeiconsIcon icon={CheckmarkCircle02Icon} className="size-3 shrink-0" />
+      <span>
+        Synced {sync.appliedCount} update{sync.appliedCount === 1 ? "" : "s"}
+        {sync.skippedCount > 0 ? ` · ${sync.skippedCount} skipped` : ""}
+        {when ? ` · ${when}` : null}
+      </span>
+    </div>
+  )
+}
+
+function humanizeError(reason: string): string {
+  switch (reason) {
+    case "google_not_connected":
+      return "connect Google Workspace first"
+    case "needs_reauth":
+      return "reconnect Google to grant Slides access"
+    case "invalid_deck_url":
+      return "deck URL is invalid"
+    default:
+      return reason
+  }
 }
 
 function AtAGlance() {

@@ -6,6 +6,7 @@ import { HugeiconsIcon } from "@hugeicons/react"
 import { notFound, redirect } from "next/navigation"
 
 import { DistributePanel } from "@/components/founder/distribute/distribute-panel"
+import type { DeckSyncMeta } from "@/components/founder/distribute/distribute-panel"
 import { ReportForm } from "@/components/founder/submit/report-form"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -16,6 +17,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { requireRole } from "@/lib/auth/require"
+import { readDeckUrlFromExtendedProfile } from "@/lib/reports/deck-sync"
 import {
   parseAnswers,
   parseQuestions,
@@ -33,7 +35,7 @@ export default async function FounderFillPage({
   const { data: assignment } = await supabase
     .from("report_assignments")
     .select(
-      "id, status, submission_id, startup:startups!inner(id, name, founder_id), publication:report_publications!inner(id, title, description, period_start, period_end, due_date, questions)"
+      "id, status, submission_id, startup:startups!inner(id, name, founder_id, extended_profile), publication:report_publications!inner(id, title, description, period_start, period_end, due_date, questions)"
     )
     .eq("id", assignmentId)
     .maybeSingle()
@@ -60,6 +62,10 @@ export default async function FounderFillPage({
 
   const investorEmailMeta = readInvestorEmailMeta(submission?.generated_outputs)
   const filingMeta = readFilingMeta(submission?.generated_outputs)
+  const deckSyncMeta = readDeckSyncMeta(submission?.generated_outputs)
+  const deckUrl = readDeckUrlFromExtendedProfile(
+    assignment.startup.extended_profile
+  )
 
   return (
     <div className="flex flex-col gap-6">
@@ -97,6 +103,8 @@ export default async function FounderFillPage({
           answers={answers}
           investorEmailMeta={investorEmailMeta}
           filingMeta={filingMeta}
+          deckUrl={deckUrl}
+          deckSyncMeta={deckSyncMeta}
         />
       ) : (
         <Card>
@@ -129,6 +137,8 @@ function SubmittedView({
   answers,
   investorEmailMeta,
   filingMeta,
+  deckUrl,
+  deckSyncMeta,
 }: {
   assignmentId: string
   submittedAt: string | null
@@ -136,6 +146,8 @@ function SubmittedView({
   answers: ReturnType<typeof parseAnswers>
   investorEmailMeta: { lastSentAt: string | null; lastSentTo: string[] | null }
   filingMeta: ReturnType<typeof readFilingMeta>
+  deckUrl: string | null
+  deckSyncMeta: DeckSyncMeta | null
 }) {
   const submittedLabel = submittedAt
     ? new Date(submittedAt).toLocaleString("en-US", {
@@ -204,6 +216,8 @@ function SubmittedView({
           initialEmailLastSentTo={investorEmailMeta.lastSentTo}
           initialFilingSubmitted={filingMeta.submitted}
           initialFilingGeneratedAt={filingMeta.generatedAt}
+          initialDeckUrl={deckUrl}
+          initialDeckSync={deckSyncMeta}
         />
       </div>
 
@@ -340,6 +354,23 @@ function readFilingMeta(outputs: unknown): {
     }
   }
   return { submitted: out, generatedAt }
+}
+
+function readDeckSyncMeta(outputs: unknown): DeckSyncMeta | null {
+  if (!outputs || typeof outputs !== "object" || Array.isArray(outputs)) {
+    return null
+  }
+  const ds = (outputs as Record<string, unknown>).deck_sync
+  if (!ds || typeof ds !== "object" || Array.isArray(ds)) return null
+  const obj = ds as Record<string, unknown>
+  const applied = Array.isArray(obj.appliedEdits) ? obj.appliedEdits : []
+  const skipped = Array.isArray(obj.skippedEdits) ? obj.skippedEdits : []
+  return {
+    syncedAt: typeof obj.syncedAt === "string" ? obj.syncedAt : null,
+    appliedCount: applied.length,
+    skippedCount: skipped.length,
+    error: typeof obj.error === "string" ? obj.error : null,
+  }
 }
 
 function readInvestorEmailMeta(outputs: unknown): {

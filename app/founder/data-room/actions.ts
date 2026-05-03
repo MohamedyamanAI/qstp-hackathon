@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache"
 
 import { requireRole } from "@/lib/auth/require"
+import { parsePresentationId } from "@/lib/integrations/google-slides"
+import type { Json } from "@/lib/supabase/database.types"
 
 function generateToken(): string {
   const bytes = new Uint8Array(18)
@@ -112,6 +114,73 @@ export async function regenerateShareToken(): Promise<ShareState> {
     showCapTable: data.show_cap_table,
     showDocuments: data.show_documents,
   }
+}
+
+export type DeckUrlState = {
+  url: string | null
+  presentationId: string | null
+}
+
+export async function setDeckUrl(rawUrl: string): Promise<DeckUrlState> {
+  const { supabase, userId } = await requireRole("founder")
+  const startupId = await findStartupId(supabase, userId)
+  if (!startupId) {
+    throw new Error("No startup associated with this account.")
+  }
+
+  const trimmed = rawUrl.trim()
+
+  if (trimmed === "") {
+    await mutateExtendedProfile(supabase, startupId, (extended) => {
+      delete extended.slides_deck_url
+      delete extended.slides_presentation_id
+    })
+    revalidatePath("/founder/data-room")
+    return { url: null, presentationId: null }
+  }
+
+  const presentationId = parsePresentationId(trimmed)
+  if (!presentationId) {
+    throw new Error(
+      "That doesn't look like a Google Slides URL. Paste the full link from docs.google.com/presentation/d/…"
+    )
+  }
+
+  await mutateExtendedProfile(supabase, startupId, (extended) => {
+    extended.slides_deck_url = trimmed
+    extended.slides_presentation_id = presentationId
+  })
+
+  revalidatePath("/founder/data-room")
+  return { url: trimmed, presentationId }
+}
+
+async function mutateExtendedProfile(
+  supabase: Awaited<ReturnType<typeof requireRole>>["supabase"],
+  startupId: string,
+  mutate: (extended: Record<string, Json | undefined>) => void
+) {
+  const { data, error: readError } = await supabase
+    .from("startups")
+    .select("extended_profile")
+    .eq("id", startupId)
+    .maybeSingle()
+  if (readError) throw readError
+
+  const extended: Record<string, Json | undefined> =
+    data?.extended_profile &&
+    typeof data.extended_profile === "object" &&
+    !Array.isArray(data.extended_profile)
+      ? { ...(data.extended_profile as Record<string, Json | undefined>) }
+      : {}
+
+  mutate(extended)
+
+  const { error: writeError } = await supabase
+    .from("startups")
+    .update({ extended_profile: extended as unknown as Json })
+    .eq("id", startupId)
+  if (writeError) throw writeError
 }
 
 export async function setShareVisibility(input: {

@@ -1,6 +1,7 @@
 import { requireRole } from "@/lib/auth/require"
+import { readDeckUrlFromExtendedProfile } from "@/lib/reports/deck-sync"
 
-import { DataRoomView, type RecentReport } from "./data-room-view"
+import { DataRoomView, type DeckSyncStatus, type RecentReport } from "./data-room-view"
 import type { ShareState } from "./actions"
 
 const RECENT_LIMIT = 6
@@ -10,7 +11,7 @@ export default async function FounderDataRoomPage() {
 
   const { data: startup } = await supabase
     .from("startups")
-    .select("id")
+    .select("id, extended_profile")
     .eq("founder_id", userId)
     .maybeSingle()
 
@@ -21,8 +22,12 @@ export default async function FounderDataRoomPage() {
     showCapTable: true,
     showDocuments: true,
   }
+  let deckUrl: string | null = null
+  let lastDeckSync: DeckSyncStatus | null = null
 
   if (startup) {
+    deckUrl = readDeckUrlFromExtendedProfile(startup.extended_profile)
+
     const { data: shareRow } = await supabase
       .from("data_room_shares")
       .select("token, enabled, show_cap_table, show_documents")
@@ -42,7 +47,7 @@ export default async function FounderDataRoomPage() {
       .select(
         `id, status,
          publication:report_publications!inner(id, title, period_start, period_end, due_date, published_at),
-         submission:kpi_submissions(id, metrics, submitted_at, status)`
+         submission:kpi_submissions(id, metrics, generated_outputs, submitted_at, status)`
       )
       .eq("startup_id", startup.id)
       .order("published_at", {
@@ -71,7 +76,37 @@ export default async function FounderDataRoomPage() {
         metrics,
       }
     })
+
+    // Pick the latest submission with a deck_sync record.
+    for (const r of rows ?? []) {
+      const outputs =
+        r.submission?.generated_outputs &&
+        typeof r.submission.generated_outputs === "object" &&
+        !Array.isArray(r.submission.generated_outputs)
+          ? (r.submission.generated_outputs as Record<string, unknown>)
+          : null
+      const deckSync = outputs?.deck_sync
+      if (deckSync && typeof deckSync === "object" && !Array.isArray(deckSync)) {
+        const ds = deckSync as Record<string, unknown>
+        const applied = Array.isArray(ds.appliedEdits) ? ds.appliedEdits : []
+        const skipped = Array.isArray(ds.skippedEdits) ? ds.skippedEdits : []
+        lastDeckSync = {
+          syncedAt: typeof ds.syncedAt === "string" ? ds.syncedAt : "",
+          appliedCount: applied.length,
+          skippedCount: skipped.length,
+          error: typeof ds.error === "string" ? ds.error : null,
+        }
+        break
+      }
+    }
   }
 
-  return <DataRoomView reports={reports} initialShare={initialShare} />
+  return (
+    <DataRoomView
+      reports={reports}
+      initialShare={initialShare}
+      initialDeckUrl={deckUrl}
+      initialDeckSync={lastDeckSync}
+    />
+  )
 }
