@@ -187,7 +187,7 @@ export default async function FounderSubmitPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {open.map((r) => {
             const days = daysUntil(r.publication.due_date)
             const overdue = days < 0

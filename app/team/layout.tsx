@@ -36,7 +36,7 @@ export default async function TeamLayout({
             <NotificationBell variant="header" />
           </div>
         </header>
-        <div className="flex flex-1 flex-col p-6">{children}</div>
+        <div className="flex flex-1 flex-col p-4 md:p-6">{children}</div>
       </SidebarInset>
     </SidebarProvider>
   )

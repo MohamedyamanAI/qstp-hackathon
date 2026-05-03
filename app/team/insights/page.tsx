@@ -328,7 +328,7 @@ export default async function TeamInsightsPage() {
                 </span>
               </div>
             </div>
-            <div className="flex h-2 flex-1 min-w-[260px] overflow-hidden rounded-full bg-muted">
+            <div className="flex h-2 w-full flex-1 overflow-hidden rounded-full bg-muted sm:min-w-[260px]">
               <span
                 className="bg-emerald-500"
                 style={{
@@ -562,7 +562,7 @@ export default async function TeamInsightsPage() {
                 </span>
               ))}
             </div>
-            <div className="grid flex-1 grid-cols-12 gap-1.5">
+            <div className="grid flex-1 grid-cols-6 gap-1.5 sm:grid-cols-12">
               {HEATMAP_DATA.map((week, w) => (
                 <div key={w} className="grid grid-rows-7 gap-1.5">
                   {week.map((v, d) => (

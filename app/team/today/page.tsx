@@ -755,7 +755,7 @@ export default async function TeamTodayPage() {
                       </div>
                     </CardHeader>
                     <CardContent className="flex flex-col gap-3">
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                         <div className="rounded-md border border-border/60 bg-muted/30 p-2.5">
                           <div className="flex items-center justify-between gap-1">
                             <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
