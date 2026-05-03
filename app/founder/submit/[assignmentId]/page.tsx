@@ -1,4 +1,7 @@
-import { CheckmarkCircle02Icon } from "@hugeicons/core-free-icons"
+import {
+  ArrowRight02Icon,
+  CheckmarkCircle02Icon,
+} from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { notFound, redirect } from "next/navigation"
 
@@ -60,7 +63,7 @@ export default async function FounderFillPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="flex animate-[fadeSlideIn_0.4s_ease_both] flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
             {assignment.publication.title}
@@ -76,7 +79,7 @@ export default async function FounderFillPage({
           ) : null}
         </div>
         {alreadySubmitted ? (
-          <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
+          <Badge className="hidden bg-emerald-100 text-emerald-700 hover:bg-emerald-100 md:inline-flex">
             <HugeiconsIcon
               icon={CheckmarkCircle02Icon}
               className="mr-1 h-3.5 w-3.5"
@@ -142,7 +145,21 @@ function SubmittedView({
     : null
   return (
     <div className="flex flex-col gap-6">
-      <Card className="border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-white dark:border-emerald-900/40 dark:from-emerald-950/40 dark:via-background dark:to-background">
+      {/* Mobile: compact submitted indicator */}
+      <div className="flex animate-[fadeSlideIn_0.4s_ease_both] items-center gap-2.5 md:hidden" style={{ animationDelay: "0ms" }}>
+        <span className="grid size-7 place-items-center rounded-full bg-emerald-100 dark:bg-emerald-900/40">
+          <HugeiconsIcon
+            icon={CheckmarkCircle02Icon}
+            className="size-4 text-emerald-600"
+          />
+        </span>
+        <span className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
+          Report submitted
+        </span>
+      </div>
+
+      {/* Desktop: full card */}
+      <Card className="hidden animate-[fadeSlideIn_0.4s_ease_both] border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-white md:block dark:border-emerald-900/40 dark:from-emerald-950/40 dark:via-background dark:to-background">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <HugeiconsIcon
@@ -162,7 +179,18 @@ function SubmittedView({
       </Card>
 
       <div>
-        <div className="mb-3 flex items-end justify-between">
+        {/* Mobile: next steps icon */}
+        <div className="mb-3 flex animate-[fadeSlideIn_0.4s_ease_both] items-center gap-2.5 md:hidden" style={{ animationDelay: "200ms" }}>
+          <span className="grid size-7 place-items-center rounded-full bg-emerald-100 dark:bg-emerald-900/40">
+            <HugeiconsIcon
+              icon={ArrowRight02Icon}
+              className="size-4 text-emerald-600"
+            />
+          </span>
+          <span className="text-sm font-medium">Next steps</span>
+        </div>
+        {/* Desktop: distribute heading */}
+        <div className="mb-3 hidden animate-[fadeSlideIn_0.4s_ease_both] items-end justify-between md:flex" style={{ animationDelay: "200ms" }}>
           <div>
             <h2 className="text-lg font-semibold tracking-tight">Distribute</h2>
             <p className="text-xs text-muted-foreground">
@@ -179,7 +207,7 @@ function SubmittedView({
         />
       </div>
 
-      <details className="group rounded-lg border border-border/60 bg-card open:bg-card/50">
+      <details className="group animate-[fadeSlideIn_0.4s_ease_both] rounded-lg border border-border/60 bg-card open:bg-card/50" style={{ animationDelay: "400ms" }}>
         <summary className="flex cursor-pointer items-center justify-between gap-3 px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground">
           <span>Your answers</span>
           <span className="text-xs font-normal text-muted-foreground group-open:hidden">

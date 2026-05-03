@@ -20,13 +20,13 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet"
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer"
 import { Textarea } from "@/components/ui/textarea"
 
 type Phase = "generating" | "ready" | "sending" | "sent" | "error"
@@ -144,17 +144,14 @@ export function InvestorEmailSheet({
 
   return (
     <>
-    <Sheet
+    <Drawer
       modal={!pdfFullscreen}
       open={open}
       onOpenChange={handleSheetOpenChange}
     >
-      <SheetContent
-        side="right"
-        className="flex flex-col gap-0 p-0 sm:max-w-[66vw]! data-[side=right]:w-[66vw]"
-      >
-        <SheetHeader className="border-b border-border/60 px-6 py-4">
-          <SheetTitle className="flex items-center gap-2">
+      <DrawerContent className="mx-auto h-[100dvh] max-h-[100dvh] w-full md:h-[90vh] md:max-h-[90vh] md:max-w-3xl">
+        <DrawerHeader className="border-b border-border/60 px-6 py-4">
+          <DrawerTitle className="flex items-center gap-2">
             <HugeiconsIcon icon={Mail01Icon} className="h-5 w-5" />
             Investor update email
             {sent ? (
@@ -164,13 +161,12 @@ export function InvestorEmailSheet({
             ) : phase === "generating" ? (
               <Badge variant="secondary">Drafting…</Badge>
             ) : null}
-          </SheetTitle>
-          <SheetDescription>
+          </DrawerTitle>
+          <DrawerDescription>
             AI-drafted from your latest submission. Edit anything below, attach
-            your investor list, and send. The polished PDF goes along
-            automatically.
-          </SheetDescription>
-        </SheetHeader>
+            your investor list, and send.
+          </DrawerDescription>
+        </DrawerHeader>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
           {phase === "generating" && !draft ? (
@@ -299,38 +295,27 @@ export function InvestorEmailSheet({
           ) : null}
         </div>
 
-        <SheetFooter className="border-t border-border/60 px-6 py-3">
-          <div className="flex w-full items-center justify-between gap-3">
-            <span className="text-xs text-muted-foreground">
-              {draft
-                ? `${recipientsRaw
-                    .split(/[,\n;\s]+/)
-                    .map((s) => s.trim())
-                    .filter(Boolean).length} recipient(s)`
-                : ""}
-            </span>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => handleSheetOpenChange(false)}
-                disabled={sending}
-              >
-                {sent ? "Close" : "Cancel"}
-              </Button>
-              <Button
-                type="button"
-                onClick={handleSend}
-                disabled={!draft || sending || sent}
-              >
-                <HugeiconsIcon icon={SentIcon} className="h-4 w-4" />
-                {sending ? "Sending…" : sent ? "Sent ✓" : "Send"}
-              </Button>
-            </div>
-          </div>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+        <DrawerFooter className="border-t border-border/60 px-6 py-4">
+          <span className="mb-1 text-center text-xs text-muted-foreground">
+            {draft
+              ? `${recipientsRaw
+                  .split(/[,\n;\s]+/)
+                  .map((s) => s.trim())
+                  .filter(Boolean).length} recipient(s)`
+              : ""}
+          </span>
+          <Button
+            type="button"
+            onClick={handleSend}
+            disabled={!draft || sending || sent}
+            className="h-12 w-full"
+          >
+            <HugeiconsIcon icon={SentIcon} className="h-4 w-4" />
+            {sending ? "Sending…" : sent ? "Sent ✓" : "Send"}
+          </Button>
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
     {pdfFullscreen && pdfUrl && typeof document !== "undefined"
       ? createPortal(
           <div

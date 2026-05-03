@@ -168,18 +168,23 @@ export function DistributePanel({
   return (
     <>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {channels.map((c) => (
-          <ChannelCard
+        {channels.map((c, i) => (
+          <div
             key={c.id}
-            channel={c}
-            onAction={
-              c.id === "email"
-                ? () => setEmailOpen(true)
-                : c.id === "filing"
-                  ? () => setFilingOpen(true)
-                  : undefined
-            }
-          />
+            className="animate-[fadeSlideIn_0.4s_ease_both]"
+            style={{ animationDelay: `${i * 150}ms` }}
+          >
+            <ChannelCard
+              channel={c}
+              onAction={
+                c.id === "email"
+                  ? () => setEmailOpen(true)
+                  : c.id === "filing"
+                    ? () => setFilingOpen(true)
+                    : undefined
+              }
+            />
+          </div>
         ))}
       </div>
 
