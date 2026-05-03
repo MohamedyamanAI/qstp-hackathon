@@ -460,7 +460,7 @@ export function DataRoomView({
         ensureLink={ensureLink}
         pending={pending}
       />
-      <div className="grid grid-cols-[1fr_320px] items-start gap-6">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_320px]">
         <Trends />
         <div className="flex flex-col gap-3">
           {!isPublic ? (
@@ -488,7 +488,7 @@ export function DataRoomView({
         </div>
       </div>
       <AtAGlance />
-      <div className="grid grid-cols-2 items-stretch gap-6">
+      <div className="grid grid-cols-1 items-stretch gap-6 md:grid-cols-2">
         <GoalsSection />
         <LastReportsSection reports={reports} />
       </div>
@@ -574,7 +574,7 @@ function Header({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-end justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex flex-col gap-0.5">
           <h2 className="cn-font-heading text-xl font-semibold tracking-tight">
             How we&apos;re growing
