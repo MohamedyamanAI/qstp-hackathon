@@ -62,14 +62,14 @@ import {
 import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+// import {
+//   Table,
+//   TableBody,
+//   TableCell,
+//   TableHead,
+//   TableHeader,
+//   TableRow,
+// } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 const COMPANY = {
@@ -385,7 +385,7 @@ export default function FounderDataRoomPage() {
         <GoalsSection />
         <MilestonesSection />
       </div>
-      <TractionSection />
+      {/* <TractionSection /> */}
       <TeamSection />
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <CapTableCard shareable={shareable} />

@@ -1,57 +1,15 @@
-"use client"
-
-import * as React from "react"
 import {
   ArrowUp01Icon,
-  ArrowUpRight01Icon,
-  Calendar01Icon,
-  CheckmarkCircle02Icon,
   Fire02Icon,
-  Rocket01Icon,
   Share05Icon,
-  SparklesIcon,
-  StarIcon,
 } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
 
-const FEED = [
-  {
-    type: "feedback",
-    title: "Team feedback on your October submission",
-    body: "Strong revenue growth. Consider adding customer retention metrics next month.",
-    time: "2h ago",
-    color: "--chart-1",
-  },
-  {
-    type: "opportunity",
-    title: "New match: MoCI Innovation Grant",
-    body: "92% fit — up to QAR 500,000 for innovative tech in healthtech or fintech.",
-    time: "5h ago",
-    color: "--chart-3",
-  },
-  {
-    type: "distribution",
-    title: "Investor update opened by 9 of 12 recipients",
-    body: "majed@waha.vc spent 11 minutes on your data room. High intent signal.",
-    time: "Yesterday",
-    color: "--chart-5",
-  },
-] as const
-
 /* ── KPI Visualization Data ── */
-
-const KPI_TABS = [
-  { key: "users", label: "Users" },
-  { key: "revenue", label: "Revenue" },
-  { key: "burn", label: "Burn" },
-  { key: "runway", label: "Runway" },
-  { key: "growth", label: "Growth" },
-] as const
 
 const REVENUE_MONTHS = [
   { m: "Jun", v: 92 },
@@ -93,9 +51,6 @@ const GROWTH_WEEKS = [
 ]
 
 export default function FounderHomePage() {
-  const [activeKpi, setActiveKpi] =
-    React.useState<(typeof KPI_TABS)[number]["key"]>("users")
-
   return (
     <div className="flex flex-col gap-6">
       {/* Hero */}
@@ -121,199 +76,16 @@ export default function FounderHomePage() {
             <HugeiconsIcon icon={Share05Icon} className="size-4" />
             Share Investor Link
           </Button>
-          <Button size="sm" variant="outline" className="gap-2">
-            <HugeiconsIcon icon={Rocket01Icon} className="size-4" />
-            Submit Now
-          </Button>
         </div>
       </div>
 
-      {/* Main grid: left feed + stats, right KPI viz */}
-      <div className="grid grid-cols-[1fr_1fr] items-stretch gap-6">
-        {/* Left: Big KPI visualization */}
-        <div className="flex flex-col gap-4">
-          {/* KPI switcher tabs */}
-          <div className="flex items-center gap-1 rounded-lg bg-muted/50 p-1">
-            {KPI_TABS.map((tab) => (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => setActiveKpi(tab.key)}
-                className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition ${
-                  activeKpi === tab.key
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          {activeKpi === "revenue" && <RevenueViz />}
-          {activeKpi === "users" && <UsersViz />}
-          {activeKpi === "burn" && <BurnViz />}
-          {activeKpi === "runway" && <RunwayViz />}
-          {activeKpi === "growth" && <GrowthViz />}
-        </div>
-
-        {/* Right column */}
-        <div className="flex flex-col gap-4">
-          {/* Row 1: Score + Quick action */}
-          <div className="grid grid-cols-[1fr_auto] gap-3">
-            {/* Founder score */}
-            <div className="flex items-center gap-4 rounded-xl border bg-card/70 px-5 py-6 backdrop-blur">
-              <div className="relative grid size-16 shrink-0 place-items-center">
-                <svg viewBox="0 0 64 64" className="-rotate-90" style={{ width: 64, height: 64 }}>
-                  <circle cx="32" cy="32" r="28" fill="none" stroke="var(--border)" strokeWidth="5" />
-                  <circle
-                    cx="32" cy="32" r="28" fill="none"
-                    stroke="var(--chart-1)" strokeWidth="5"
-                    strokeLinecap="round"
-                    strokeDasharray={`${(84 / 100) * 2 * Math.PI * 28} ${2 * Math.PI * 28}`}
-                  />
-                </svg>
-                <span className="absolute cn-font-heading text-lg font-bold tabular-nums">84</span>
-              </div>
-              <div className="flex flex-col gap-1">
-                <span className="text-sm font-semibold">Health Score</span>
-                <span className="text-[11px] text-muted-foreground">Top 18% in your QSTP cohort</span>
-                <div className="mt-1 flex items-center gap-1.5">
-                  <Badge
-                    variant="outline"
-                    className="gap-1 border-transparent text-[9px]"
-                    style={{
-                      background: "color-mix(in oklch, var(--chart-1) 12%, transparent)",
-                      color: "var(--chart-1)",
-                    }}
-                  >
-                    <HugeiconsIcon icon={ArrowUp01Icon} className="size-2.5" />
-                    +6 pts
-                  </Badge>
-                  <Badge variant="outline" className="gap-1 border-transparent text-[9px]">
-                    <HugeiconsIcon icon={Fire02Icon} className="size-2.5" />
-                    8-mo streak
-                  </Badge>
-                </div>
-              </div>
-            </div>
-
-            {/* Quick action: Submit */}
-            <button
-              type="button"
-              className="group flex w-28 flex-col items-center justify-center gap-2 rounded-xl border bg-primary/5 p-4 text-center transition hover:bg-primary/10 hover:ring-1 hover:ring-primary/30"
-            >
-              <span
-                className="grid size-10 place-items-center rounded-lg transition group-hover:scale-110"
-                style={{
-                  background: "color-mix(in oklch, var(--chart-1) 20%, var(--card))",
-                  color: "var(--chart-1)",
-                }}
-              >
-                <HugeiconsIcon icon={Rocket01Icon} className="size-5" />
-              </span>
-              <span className="text-[11px] font-medium leading-tight">
-                Submit this month&apos;s update
-              </span>
-            </button>
-          </div>
-
-          {/* Row 2: Wins + Points wallet */}
-          <div className="grid flex-1 grid-cols-2 gap-3">
-            {/* This week's wins */}
-            <div className="flex flex-col gap-3 rounded-xl border bg-card/70 p-5 backdrop-blur">
-              <div className="flex items-center gap-2">
-                <span
-                  className="grid size-8 place-items-center rounded-lg"
-                  style={{
-                    background: "color-mix(in oklch, var(--chart-1) 18%, var(--card))",
-                    color: "var(--chart-1)",
-                  }}
-                >
-                  <HugeiconsIcon icon={StarIcon} className="size-4" />
-                </span>
-                <span className="text-sm font-semibold">This week&apos;s wins</span>
-              </div>
-              <Separator />
-              {FEED.map((item) => (
-                <div key={item.title} className="flex items-start gap-3">
-                  <span
-                    className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-md"
-                    style={{
-                      background: `color-mix(in oklch, var(${item.color}) 15%, var(--card))`,
-                      color: `var(${item.color})`,
-                    }}
-                  >
-                    <HugeiconsIcon
-                      icon={
-                        item.type === "feedback"
-                          ? CheckmarkCircle02Icon
-                          : item.type === "opportunity"
-                            ? StarIcon
-                            : ArrowUpRight01Icon
-                      }
-                      className="size-3"
-                    />
-                  </span>
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-xs font-medium leading-snug">
-                      {item.title}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground">
-                      {item.time}
-                    </span>
-                  </div>
-                </div>
-              ))}
-              <Separator />
-              <div className="flex items-center gap-2">
-                <HugeiconsIcon icon={Calendar01Icon} className="size-3.5 text-muted-foreground" />
-                <span className="text-[10px] text-muted-foreground">
-                  Next submission in 12 days
-                </span>
-                <Progress value={68} className="ml-auto h-1 w-16" />
-              </div>
-            </div>
-
-            {/* Points wallet */}
-            <div className="relative flex flex-col items-center justify-center overflow-hidden rounded-xl border">
-              {/* Blurred green background */}
-              <div
-                className="absolute inset-0"
-                style={{
-                  background: "radial-gradient(ellipse at 30% 40%, hsl(90 30% 55%), hsl(100 25% 35%) 50%, hsl(110 20% 25%) 100%)",
-                }}
-              />
-              <div className="absolute inset-0 backdrop-blur-sm" />
-              {/* Content */}
-              <div className="relative z-10 flex flex-col items-center gap-3 text-center">
-                <span
-                  className="grid size-12 place-items-center rounded-full bg-white/15 backdrop-blur"
-                >
-                  <HugeiconsIcon icon={SparklesIcon} className="size-6 text-white" />
-                </span>
-                <div className="flex flex-col gap-1">
-                  <span className="cn-font-heading text-3xl font-bold tabular-nums text-white">
-                    1,240
-                  </span>
-                  <span className="text-xs font-medium text-white/80">
-                    Points Wallet
-                  </span>
-                </div>
-                <Separator className="w-16 bg-white/20" />
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-[10px] text-white/70">
-                    340 pts to Trailblazer
-                  </span>
-                  <div className="mx-auto h-1 w-20 overflow-hidden rounded-full bg-white/20">
-                    <div className="h-full w-[68%] rounded-full bg-white/70" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
+      {/* KPI charts — 2 per row */}
+      <div className="grid grid-cols-2 gap-6">
+        <UsersViz />
+        <RevenueViz />
+        <BurnViz />
+        <RunwayViz />
+        <GrowthViz />
       </div>
     </div>
   )
@@ -486,7 +258,7 @@ function PersonSilhouette({
   style,
 }: {
   className?: string
-  style?: React.CSSProperties
+  style?: import("react").CSSProperties
 }) {
   return (
     <svg
