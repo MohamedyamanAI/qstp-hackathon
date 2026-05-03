@@ -19,17 +19,17 @@ export default async function Page() {
     <div className="flex min-h-svh flex-col bg-background">
       <SiteHeader />
       <main className="flex flex-1 items-center justify-center px-6 py-16">
-        <section className="flex max-w-2xl flex-col items-center gap-6 text-center">
+        <section className="flex max-w-3xl flex-col items-center gap-6 text-center">
           <span className="rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
-            QSTP Hackathon · 2026
+            QSTP · Founder operating system
           </span>
           <h1 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
-            Build faster with a sharp foundation.
+            One monthly update. Every stakeholder, handled.
           </h1>
           <p className="text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg">
-            Authentication, a design system, and a clean component library —
-            ready out of the box, so you can spend the weekend on the idea
-            instead of the scaffolding.
+            Founders submit once in 90 seconds — investor emails, board decks,
+            announcements, and opportunity matches go out automatically. The
+            QSTP team gets a live portfolio view, not another inbox to chase.
           </p>
           <div className="flex flex-col items-center gap-3 sm:flex-row">
             {isAuthenticated && home ? (
@@ -47,10 +47,29 @@ export default async function Page() {
               </>
             )}
           </div>
-          <p className="font-mono text-xs text-muted-foreground">
-            Press <kbd className="rounded border bg-muted px-1.5 py-0.5">d</kbd>{" "}
-            to toggle dark mode
-          </p>
+          <ul className="mt-4 grid w-full gap-3 text-left sm:grid-cols-3">
+            <li className="rounded-lg border border-border bg-muted/40 p-4">
+              <p className="text-sm font-medium">Submit once</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Pre-filled from Stripe, GitHub, LinkedIn, HubSpot. Voice or
+                form.
+              </p>
+            </li>
+            <li className="rounded-lg border border-border bg-muted/40 p-4">
+              <p className="text-sm font-medium">Distribute everywhere</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Investor update, board deck, and announcement drafted in one
+                pass.
+              </p>
+            </li>
+            <li className="rounded-lg border border-border bg-muted/40 p-4">
+              <p className="text-sm font-medium">Earn the upside</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Match grants and partners, climb tiers, and unlock unfair
+                advantages.
+              </p>
+            </li>
+          </ul>
         </section>
       </main>
     </div>
