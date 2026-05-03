@@ -4,6 +4,13 @@
   "main": ".open-next/worker.js",
   "compatibility_date": "2025-04-01",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "vars": {
+    "NEXT_PUBLIC_SUPABASE_URL": "https://uaxmjretqyydyiaimrwb.supabase.co",
+    "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_0mt0vbpVT3Bc0WWO6xP0nw_fIP1EeI7",
+    "NEXT_PUBLIC_VAPID_PUBLIC_KEY": "BNxrdE38XVJ1Qx4nyBpz85GhkwbGbhDqqvzqUdRiCnxvqkGLNL4m2V06VlG_PhGgLB75OhBJOlsdX3cXBWkw9T8",
+    "VAPID_SUBJECT": "mailto:hello@tabitrack.com",
+    "NEXT_PUBLIC_SITE_URL": "https://qstp-hackathon.hackathontyrant.workers.dev"
+  },
   "assets": {
     "binding": "ASSETS",
     "directory": ".open-next/assets"
