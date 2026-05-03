@@ -27,7 +27,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-
+  useSidebar,
 } from "@/components/ui/sidebar"
 
 const NAV_ITEMS = [
@@ -43,8 +43,12 @@ const FOOTER_ITEMS = [
 
 export function FounderSidebar({ email }: { email: string }) {
   const pathname = usePathname()
+  const { isMobile, setOpenMobile } = useSidebar()
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(`${href}/`)
+  const closeOnMobile = () => {
+    if (isMobile) setOpenMobile(false)
+  }
 
   return (
     <Sidebar collapsible="icon">
@@ -75,7 +79,7 @@ export function FounderSidebar({ email }: { email: string }) {
                     isActive={isActive(item.href)}
                     tooltip={item.label}
                   >
-                    <Link href={item.href}>
+                    <Link href={item.href} onClick={closeOnMobile}>
                       <HugeiconsIcon icon={item.icon} />
                       <span>{item.label}</span>
                     </Link>
@@ -97,7 +101,7 @@ export function FounderSidebar({ email }: { email: string }) {
                     isActive={isActive(item.href)}
                     tooltip={item.label}
                   >
-                    <Link href={item.href}>
+                    <Link href={item.href} onClick={closeOnMobile}>
                       <HugeiconsIcon icon={item.icon} />
                       <span>{item.label}</span>
                     </Link>
